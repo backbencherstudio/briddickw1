@@ -39,10 +39,9 @@ import axios from "axios";
 const sendOtpMessage = async (recipientPhone, message) => {
   console.log("Data aiche", recipientPhone, message);
 
-
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+  const accountSid = import.meta.env.TWILIO_ACCOUNT_SID;
+  const authToken = import.meta.env.TWILIO_AUTH_TOKEN;
+  const twilioNumber = import.meta.env.TWILIO_PHONE_NUMBER;
 
 
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
