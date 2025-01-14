@@ -177,10 +177,10 @@ const About = () => {
                         </div>
                         <div className="flex flex-col items-start gap-2">
                           <h3 className="text-[#0F113A] text-[20px] lg:text-[24px] font-semibold leading-[130%]">
-                            Sell faster and for more
+                            Buy faster and for more
                           </h3>
                           <p className="text-[#4A4C56] text-[16px] font-normal leading-[160%]">
-                            Sell your home faster and for more than the national
+                            Buy your home faster and for more than the national
                             average.
                           </p>
                         </div>
