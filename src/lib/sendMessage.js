@@ -32,9 +32,9 @@
 // };
 
 import axios from "axios";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 
-dotenv.config();
+// dotenv.config();
 
 const sendOtpMessage = async (recipientPhone, message) => {
   console.log("Data aiche", recipientPhone, message);
