@@ -12,6 +12,7 @@ import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
 import { sendEmail } from "../lib/sendEmail";
+import sendOtpMessage from "../lib/sendMessage";
 
 // Progress bar component
 const ProgressBar = ({ currentStep, totalSteps }) => {
@@ -319,58 +320,60 @@ const BuyMultipleFormWithMudal = () => {
     // Step 2: Price Range
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col select-none">
-          <div className="lg:flex justify-between items-center mb-4 px-3 lg:px-7 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+        <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
+          <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
               Roughly, what is your home worth?
             </h2>
           </div>
 
-          <div className="py-8 md:w-[750px] mx-auto font-bold text-3xl flex-grow">
-            <div className="text-center mb-4">
-              <div className="flex justify-between mx-36 items-center">
+          <div className="py-6 sm:py-8 w-full sm:w-[550px] md:w-[650px] lg:w-[750px] mx-auto font-bold text-2xl sm:text-3xl flex-grow">
+            <div className="text-center mb-6">
+              <div className="flex justify-between items-center mx-4 sm:mx-12 lg:mx-36">
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={handleDecrease}
                 >
-                  <MinusIcon className="w-6 h-6 text-current" />
+                  <MinusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
-                <p className="mx-6">
+                <p className="mx-4 sm:mx-6">
                   {formatPriceRange(formData.priceRange[0])}
                 </p>
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={handleIncrease}
                 >
-                  <PlusIcon className="w-6 h-6 text-current" />
+                  <PlusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
               </div>
             </div>
 
-            <Slider
-              defaultValue={[0]} 
-              max={pricePoints.length - 1} 
-              min={0} 
-              step={1}
-              value={[
-                pricePoints.findIndex(
-                  (p) => p.value === formData.priceRange[0]
-                ),
-              ]} 
-              onValueChange={(value) => {
-                updateFormData("priceRange", [pricePoints[value[0]].value]);
-              }}
-              className="bg-[#E9EAF3] my-6"
-            />
-            <div className="flex justify-between mt-2">
+            <div className="w-full">
+              <Slider
+                defaultValue={[0]}
+                max={pricePoints.length - 1}
+                min={0}
+                step={1}
+                value={[
+                  pricePoints.findIndex(
+                    (p) => p.value === formData.priceRange[0]
+                  ),
+                ]}
+                onValueChange={(value) => {
+                  updateFormData("priceRange", [pricePoints[value[0]].value]);
+                }}
+                className="bg-[#E9EAF3] my-6 text-center mx-auto"
+              />
+            </div>
+            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
           </div>
 
-          <div className="flex justify-between items-center px-20 py-8 mt-auto">
+          <div className="flex justify-between items-center gap-4 px-8 sm:px-10 lg:px-20 py-8 mt-auto">
             <Button
-              className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
+             className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
               onClick={handleBack}
             >
@@ -391,9 +394,12 @@ const BuyMultipleFormWithMudal = () => {
     // Step 4: Agent Question
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div
+        className="w-full h-full l
+    md:h-[80vh] mx-auto flex flex-col px-3 select-none"
+      >
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+          <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               What price range are you looking to buy?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -445,9 +451,9 @@ const BuyMultipleFormWithMudal = () => {
     // Step 5: Selling Question
     {
       content: (
-        <div className="lg:w-[815px] px-3 h-[80vh] mx-auto flex flex-col select-none">
+        <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Have you already hired a real estate Agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -500,9 +506,9 @@ const BuyMultipleFormWithMudal = () => {
     // Step 6: Additional Details
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
           <div className=" mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Are there any other details you’d like to share?
             </h2>
           </div>
@@ -541,7 +547,7 @@ const BuyMultipleFormWithMudal = () => {
       content: (
         <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+            <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
           </div>
@@ -600,10 +606,12 @@ const BuyMultipleFormWithMudal = () => {
             </div>
           </div>
 
-          <p className="text-lg font-normal text-gray-500 mt-4">
+          <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
             By clicking &#34;Get Agents&#34; I acknowledge and agree to
-            RealEstateAgents Terms of Use and Privacy Policy, which includes
-            binding arbitration and consent to receive electronic
+            RealEstateAgents{" "}
+            <span className="text-[#23298B]">Terms of Use</span> and{" "}
+            <span className="text-[#23298B]">Privacy Policy</span>, which
+            includes binding arbitration and consent to receive electronic
             communications.
           </p>
 
@@ -624,7 +632,7 @@ const BuyMultipleFormWithMudal = () => {
     // Step 8: Phone Verification
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div className="md:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl lg:text-3xl font-semibold">
               We’re preparing to connect you to at least 3 agents. Please verify
@@ -670,7 +678,7 @@ const BuyMultipleFormWithMudal = () => {
               Text Confirmation Code
             </Button>
           </div>
-          <p className="text-gray-500 md:text-lg mt-10 md:mt-0">
+          <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
             By clicking &quot;Text Confirmation Code&quot;, I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,

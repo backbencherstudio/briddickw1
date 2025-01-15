@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
@@ -7,8 +7,11 @@ import TopArrowIcon from "../../public/icons/TopArrow";
 export const LocationStep = ({ formData, updateFormData, handleNext, placeholderTitle }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1); // Track focused result index
-  const [error, setError] = useState(""); // For validation message
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [error, setError] = useState("");
+
+  const resultRefs = useRef([]);
+  
 
   const formatDisplayName = (rawDisplayName) => {
     const parts = rawDisplayName.split(",").map((item) => item.trim());
@@ -92,6 +95,16 @@ export const LocationStep = ({ formData, updateFormData, handleNext, placeholder
     }
   };
 
+   // Scroll focused result into view
+   useEffect(() => {
+    if (focusedIndex >= 0 && resultRefs.current[focusedIndex]) {
+      resultRefs.current[focusedIndex].scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [focusedIndex]);
+
   // Attach keydown listener
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -109,56 +122,57 @@ export const LocationStep = ({ formData, updateFormData, handleNext, placeholder
   };
 
   return (
-    <div className="lg:w-[987px] flex flex-col rounded-2xl rounded-tl-none shadow-lg">
-      <div className="p-4 md:w-[700px] lg:w-[987px] rounded-2xl">
-        <div className="mb-4 flex items-center gap-4 rounded-2xl">
-          <Input
-            className={`py-7 lg:placeholder:text-xl flex-grow border-none outline-none ${
-              error ? "border-red-500" : ""
-            }`}
-            placeholder={placeholderTitle}
-            value={formData.addressToSell}
-            onChange={(e) => {
-              updateFormData("addressToSell", e.target.value);
-              searchLocation(e.target.value);
-              setError("");
-            }}
-          />
-
-          <Button
-            className="flex items-center gap-1 md:px-4 md:py-3"
-            variant="primary"
-            onClick={handleSubmit}
-          >
-            Compare Agents
-            <TopArrowIcon />
-          </Button>
-        </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        {isSearching && <div className="mt-2 text-gray-600">Searching...</div>}
-
-        {searchResults.length > 0 && (
-          <div className="mt-2 border rounded-md shadow-lg">
-            {searchResults.map((result, index) => {
-              // Format each display_name for list rendering
-              const formattedName = formatDisplayName(result.display_name);
-              return (
-                <div
-                  key={index}
-                  className={`p-2 cursor-pointer ${
-                    index === focusedIndex
-                      ? "bg-gray-200"
-                      : "hover:bg-gray-100 rounded-2xl"
-                  }`}
-                  onClick={() => handleLocationSelect(result)}
-                >
-                  {formattedName}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+    <div className="md:w-[700px] lg:w-[987px] flex flex-col items-center lg:rounded-2xl rounded-tl-none ">
+  <div className="relative px-4 py-1 w-[328px] md:w-[700px] lg:w-[987px] lg:rounded-2xl">
+    <div className="p-4 lg:flex items-center gap-4 lg:rounded-2xl">
+      <Input
+        className={`py-7 placeholder:text-sm md:placeholder:text-base lg:placeholder:text-xl flex-grow border-none outline-none ${
+          error ? "border-red-500" : ""
+        }`}
+        placeholder={placeholderTitle}
+        value={formData.addressToSell}
+        onChange={(e) => {
+          updateFormData("addressToSell", e.target.value);
+          searchLocation(e.target.value);
+          setError("");
+        }}
+      />
+      <Button
+        className="w-full lg:w-40 my-2 flex items-center gap-1 md:px-4 md:py-3"
+        variant="primary"
+        onClick={handleSubmit}
+      >
+        Compare Agents
+        <TopArrowIcon />
+      </Button>
     </div>
+    {error && <p className="text-red-500 text-sm">{error}</p>}
+    {isSearching && <div className="mt-2 text-gray-600">Searching...</div>}
+
+    {/* Box for Search Results */}
+    {searchResults.length > 0 && (
+      <div className="absolute bg-white top-[64px] left-0 mt-2 border rounded-md max-h-[250px] lg:max-h-[300px] w-full overflow-y-auto text-sm md:text-base lg:text-lg">
+        {searchResults.map((result, index) => {
+          const formattedName = formatDisplayName(result.display_name);
+          return (
+            <div
+              key={index}
+              className={`p-2 cursor-pointer ${
+                index === focusedIndex
+                  ? "bg-gray-200"
+                  : "hover:bg-gray-100 rounded-2xl"
+              }`}
+              onClick={() => handleLocationSelect(result)}
+            >
+              <p className="">{formattedName}</p>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</div>
+
+
   );
 };

@@ -12,6 +12,7 @@ import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
 import { sendEmail } from "../lib/sendEmail";
+import sendOtpMessage from "../lib/sendMessage";
 
 // Progress bar component
 const ProgressBar = ({ currentStep, totalSteps }) => {
@@ -105,12 +106,12 @@ const SellAndBuyMultipleFormWithModul = () => {
     let city = "";
     for (let i = 2; i < parts.length; i++) {
       const val = parts[i].toLowerCase();
-  
+
       if (
         !val.includes("washington") &&
         !val.includes("united states") &&
         !val.includes("county") &&
-        !/^\d+$/.test(val) 
+        !/^\d+$/.test(val)
       ) {
         city = parts[i];
         break;
@@ -135,7 +136,6 @@ const SellAndBuyMultipleFormWithModul = () => {
       );
       const data = await response.json();
       console.log("data:", data);
-      
 
       // Filter to ensure we only keep US addresses (if you want)
       const usLocations = data.filter((result) =>
@@ -271,7 +271,7 @@ const SellAndBuyMultipleFormWithModul = () => {
       publicKey: "JKWvE6lLACENhmYIi",
       senderName: "Briddick",
       senderEmail: "tqmhosain@gmail.com",
-      recipientEmails:  finalFormData?.email,  
+      recipientEmails: finalFormData?.email,
       details: {
         firstName: finalFormData?.firstName,
         lastName: finalFormData?.lastName,
@@ -284,7 +284,6 @@ const SellAndBuyMultipleFormWithModul = () => {
       },
     });
     console.log("Email sent successfully!");
-    
   };
 
   const handleOtpInput = (e, index) => {
@@ -354,7 +353,7 @@ const SellAndBuyMultipleFormWithModul = () => {
   };
 
   // Phone number validation function
-  const validatePhoneNumber = async() => {
+  const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
 
@@ -367,7 +366,7 @@ const SellAndBuyMultipleFormWithModul = () => {
       isValid = false;
     }
 
-    if(isValid){
+    if (isValid) {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       localStorage.setItem("zi5jd", otp);
       const res = await sendOtpMessage(formData.phoneNumber, otp);
@@ -391,21 +390,8 @@ const SellAndBuyMultipleFormWithModul = () => {
 
   const pricePoints = useMemo(() => getPricePoints(), []);
 
-  // const findNearestPricePoint = (value) => {
-  //   return pricePoints.reduce((prev, curr) => {
-  //     return Math.abs(curr.value - value) < Math.abs(prev.value - value)
-  //       ? curr
-  //       : prev;
-  //   });
-  // };
-
-  // const formatPriceRange = (value) => {
-  //   const point = findNearestPricePoint(value);
-  //   return point.display;
-  // };
-
   const formatPriceRange = (value) => {
-    const pointIndex = pricePoints.findIndex(p => p.value === value);
+    const pointIndex = pricePoints.findIndex((p) => p.value === value);
     return pricePoints[pointIndex].display;
   };
 
@@ -465,57 +451,57 @@ const SellAndBuyMultipleFormWithModul = () => {
           formData={formData}
           updateFormData={updateFormData}
           handleNext={handleNext}
-          placeholderTitle='Enter the address you are selling'
+          placeholderTitle="Enter the address you are selling"
         />
       ),
     },
     // Step 2: Price Range
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col select-none">
-          <div className="lg:flex justify-between items-center mb-4 px-3 lg:px-7 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+        <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
+            <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
               Roughly, what is your home worth?
             </h2>
           </div>
 
-          <div className="py-8 md:w-[750px] mx-auto font-bold text-3xl flex-grow">
-            <div className="text-center mb-4">
-              <div className="flex justify-between mx-36 items-center">
+          <div className="py-6 sm:py-8 w-full sm:w-[550px] md:w-[650px] lg:w-[750px] mx-auto font-bold text-2xl sm:text-3xl flex-grow">
+            <div className="text-center mb-6">
+              <div className="flex justify-between items-center mx-4 sm:mx-12 lg:mx-36">
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={handleDecrease}
                 >
-                  <MinusIcon className="w-6 h-6 text-current" />
+                  <MinusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
                 <p className="mx-6">
                   {formatPriceRange(formData.homePriceRange[0])}
                 </p>
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={handleIncrease}
                 >
-                  <PlusIcon className="w-6 h-6 text-current" />
+                  <PlusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
               </div>
             </div>
 
             <Slider
-              defaultValue={[0]} 
-              max={pricePoints.length - 1} 
-              min={0} 
+              defaultValue={[0]}
+              max={pricePoints.length - 1}
+              min={0}
               step={1}
               value={[
                 pricePoints.findIndex(
                   (p) => p.value === formData.homePriceRange[0]
                 ),
-              ]} 
+              ]}
               onValueChange={(value) => {
                 updateFormData("homePriceRange", [pricePoints[value[0]].value]);
               }}
-              className="bg-[#E9EAF3] my-6"
+              className="bg-[#E9EAF3] my-6 text-center mx-auto"
             />
-            <div className="flex justify-between mt-2">
+            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
@@ -544,9 +530,12 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 3: Enter you Buy Location
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+        <div
+        className="w-full h-full l
+    md:h-[80vh] mx-auto flex flex-col px-3 select-none"
+      >
+        <div className="mb-4 mt-24">
+          <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Where are you looking to buy?
             </h2>
 
@@ -632,50 +621,52 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 3: Price Range looking buy
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className="lg:flex justify-between items-center mb-4 px-3 lg:px-7 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+        <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
+            <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
               What price range are you looking to buy?
             </h2>
           </div>
 
-          <div className="py-8 md:w-[750px] mx-auto font-bold text-3xl flex-grow">
-            <div className="text-center mb-4">
-              <div className="flex justify-between mx-36 items-center">
+          <div className="py-6 sm:py-8 w-full sm:w-[550px] md:w-[650px] lg:w-[750px] mx-auto font-bold text-2xl sm:text-3xl flex-grow">
+            <div className="text-center mb-6">
+              <div className="flex justify-between items-center mx-4 sm:mx-12 lg:mx-36">
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={lookingPriceHandleDecrease}
                 >
-                  <MinusIcon className="w-7 h-7 text-current" />
+                  <MinusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
                 <p className="mx-6">
                   {formatPriceRange(formData.lookingPriceRange[0])}
                 </p>
-                <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                 <div
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={lookingPriceHandleIncrease}
                 >
-                  <PlusIcon className="w-7 h-7 text-current" />
+                  <PlusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
               </div>
             </div>
 
             <Slider
-              defaultValue={[0]} 
-              max={pricePoints.length - 1} 
-              min={0} 
+              defaultValue={[0]}
+              max={pricePoints.length - 1}
+              min={0}
               step={1}
               value={[
                 pricePoints.findIndex(
                   (p) => p.value === formData.lookingPriceRange[0]
                 ),
-              ]} 
+              ]}
               onValueChange={(value) => {
-                updateFormData("lookingPriceRange", [pricePoints[value[0]].value]);
+                updateFormData("lookingPriceRange", [
+                  pricePoints[value[0]].value,
+                ]);
               }}
-              className="bg-[#E9EAF3] my-6"
+              className="bg-[#E9EAF3] my-6 text-center mx-auto"
             />
-            <div className="flex justify-between mt-2">
+            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
@@ -707,9 +698,12 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 4: Agent Question
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div
+          className="w-full h-full l
+      md:h-[80vh] mx-auto flex flex-col px-3 select-none"
+        >
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Have you already hired a real estate agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -761,9 +755,9 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 5: Additional Details
     {
       content: (
-        <div className="lg:w-[815px] px-3 h-[80vh] mx-auto flex flex-col select-none">
-          <div className=" mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+        <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
+          <div className="mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Are there any other details you’d like to share?
             </h2>
           </div>
@@ -800,13 +794,13 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 6: Contact Details
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
+          <div className=" mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
           </div>
-          <p className="md:text-lg text-gray-600">
+          <p className="text-sm md:text-lg text-gray-600">
             This is where RealEstateAgents.com and our agents will contact you
             to discuss your needs
           </p>
@@ -861,10 +855,12 @@ const SellAndBuyMultipleFormWithModul = () => {
             </div>
           </div>
 
-          <p className="text-lg font-normal text-gray-500 mt-4">
+          <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
             By clicking &#34;Get Agents&#34; I acknowledge and agree to
-            RealEstateAgents Terms of Use and Privacy Policy, which includes
-            binding arbitration and consent to receive electronic
+            RealEstateAgents{" "}
+            <span className="text-[#23298B]">Terms of Use</span> and{" "}
+            <span className="text-[#23298B]">Privacy Policy</span>, which
+            includes binding arbitration and consent to receive electronic
             communications.
           </p>
 
@@ -885,8 +881,8 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 7: Phone Verification
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
-          <div className="mb-4 mt-5 lg:mt-24">
+        <div className="md:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
+          <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl md:text-3xl font-semibold">
               We’re preparing to connect you to at least 3 agents. Please verify
               the following information to get connected sooner:
@@ -931,7 +927,7 @@ const SellAndBuyMultipleFormWithModul = () => {
               Text Confirmation Code
             </Button>
           </div>
-          <p className="text-gray-500 md:text-lg mt-10 md:mt-0">
+          <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
             By clicking &quot;Text Confirmation Code&quot;, I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
@@ -1008,8 +1004,10 @@ const SellAndBuyMultipleFormWithModul = () => {
 
             <p className="text-sm mt-8 text-gray-500 text-center">
               Didn’t receive a code?{" "}
-           
-              <span className="text-indigo-600 font-semibold cursor-pointer hover:underline" onClick={handleBack}>
+              <span
+                className="text-indigo-600 font-semibold cursor-pointer hover:underline"
+                onClick={handleBack}
+              >
                 create a new request
               </span>
             </p>

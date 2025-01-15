@@ -25,7 +25,7 @@ const TabsComponent = () => {
             <button
               key={tab.id}
               onClick={() => setTabIndex(tab.id)}
-              className={`flex-1 pb-3 md:text-xl md:font-semibold px-6  md:px-8 py-5 text-center whitespace-nowrap ${
+              className={`flex-1 pb-3 md:text-xl md:font-semibold px-[33px]  md:px-8 py-5 text-center whitespace-nowrap ${
                 tabIndex === tab.id
                   ? "border-b-4 border-[#23298B] text-[#23298B]"
                   : "text-gray-500 hover:text-[#1f2249]"
@@ -38,7 +38,7 @@ const TabsComponent = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="rounded-b-lg">{tabs[tabIndex].component}</div>
+      <div className="rounded-b-lg ">{tabs[tabIndex].component}</div>
     </div>
   );
 };

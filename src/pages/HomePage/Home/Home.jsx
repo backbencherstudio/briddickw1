@@ -45,7 +45,7 @@ const Home = () => {
         <title>Find Top Real Estate Agents.</title>
       </Helmet>
       <Banner />
-      <button onClick={() => sendTestEmail()}>Send Test Email</button>
+      <button onClick={() => sendTestEmail()}></button>
       <Features />
       <Agents />
       <About />

@@ -152,7 +152,7 @@ const SellMultipleFormWithModul = () => {
       publicKey: "JKWvE6lLACENhmYIi",
       senderName: "Briddick",
       senderEmail: "tqmhosain@gmail.com",
-      recipientEmails:  finalFormData?.email,  
+      recipientEmails: finalFormData?.email,
       details: {
         firstName: finalFormData?.firstName,
         lastName: finalFormData?.lastName,
@@ -247,44 +247,6 @@ const SellMultipleFormWithModul = () => {
     }
   };
 
-  // // Phone number validation function
-  // const validatePhoneNumber = async () => {
-  //   let isValid = true;
-  //   const newErrors = { ...INITIAL_ERRORS };
-
-  //   const phonePattern = /^(\+1|1)?[-.●]?(\d{3})[-.●]?(\d{3})[-.●]?(\d{4})$/;
-  //   if (!formData.phoneNumber.trim()) {
-  //     newErrors.phoneNumber = "Phone number is required";
-  //     isValid = false;
-  //   } else if (!phonePattern.test(formData.phoneNumber)) {
-  //     newErrors.phoneNumber = "Please enter a valid USA phone number";
-  //     isValid = false;
-  //   }
-
-  //   setErrors(newErrors); // Set error messages to state
-  //   return isValid;
-
-  //   // if (!formData.phoneNumber.trim()) {
-  //   //   newErrors.phoneNumber = "Phone number is required";
-  //   //   isValid = false;
-  //   //   return;
-  //   // }
-
-  //   // if (!phonePattern.test(formData.phoneNumber)) {
-  //   //   newErrors.phoneNumber = "Please enter a valid USA phone number";
-  //   //   isValid = false;
-  //   //   return;
-  //   // }
-  //   // setErrors(newErrors); // Set error messages to state
-
-  // const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  // localStorage.setItem("zi5jd", otp);
-  // const res = await sendOtpMessage(formData.phoneNumber, otp);
-  // console.log(res);
-
-  //   // return isValid;
-  // };
-
   const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
@@ -322,19 +284,6 @@ const SellMultipleFormWithModul = () => {
   //slider price range
   const pricePoints = useMemo(() => getPricePoints(), []);
 
-  // const findNearestPricePoint = (value) => {
-  //   return pricePoints.reduce((prev, curr) => {
-  //     return Math.abs(curr.value - value) < Math.abs(prev.value - value)
-  //       ? curr
-  //       : prev;
-  //   });
-  // };
-
-  // const formatPriceRange = (value) => {
-  //   const point = findNearestPricePoint(value);
-  //   return point.display;
-  // };
-
   const formatPriceRange = (value) => {
     const pointIndex = pricePoints.findIndex((p) => p.value === value);
     return pricePoints[pointIndex].display;
@@ -356,11 +305,6 @@ const SellMultipleFormWithModul = () => {
     }
   };
 
-  // const handleSliderChange = (value) => {
-  //   const nearestPoint = findNearestPricePoint(value[0]);
-  //   updateFormData("priceRange", [nearestPoint.value]);
-  // };
-
   const steps = [
     // step 1:
     {
@@ -376,56 +320,58 @@ const SellMultipleFormWithModul = () => {
     // Step 2: Price Range
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col select-none">
-          <div className="lg:flex justify-between items-center mb-4 px-3 lg:px-7 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+        <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
+            <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
               Roughly, what is your home worth?
             </h2>
           </div>
 
-          <div className="py-8 md:w-[750px] mx-auto font-bold text-3xl flex-grow">
-            <div className="text-center mb-4">
-              <div className="flex justify-between mx-36 items-center">
+          <div className="py-6 sm:py-8 w-full sm:w-[550px] md:w-[650px] lg:w-[750px] mx-auto font-bold text-2xl sm:text-3xl flex-grow">
+            <div className="text-center mb-6">
+              <div className="flex justify-between items-center mx-4 sm:mx-12 lg:mx-36">
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={handleDecrease}
                 >
-                  <MinusIcon className="w-6 h-6 text-current" />
+                  <MinusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
-                <p className="mx-6">
+                <p className="mx-4 sm:mx-6">
                   {formatPriceRange(formData.priceRange[0])}
                 </p>
                 <div
-                  className="border text-3xl p-2 inline-flex items-center justify-center cursor-pointer hover:border hover:border-[#0F113A] ease-linear duration-200"
+                  className="border text-xl sm:text-2xl p-2 sm:p-3 inline-flex items-center justify-center cursor-pointer hover:border-[#0F113A] ease-linear duration-200"
                   onClick={handleIncrease}
                 >
-                  <PlusIcon className="w-6 h-6 text-current" />
+                  <PlusIcon className="w-4 h-4 md:w-6 md:h-6 text-current" />
                 </div>
               </div>
             </div>
 
-            <Slider
-              defaultValue={[0]}
-              max={pricePoints.length - 1}
-              min={0}
-              step={1}
-              value={[
-                pricePoints.findIndex(
-                  (p) => p.value === formData.priceRange[0]
-                ),
-              ]}
-              onValueChange={(value) => {
-                updateFormData("priceRange", [pricePoints[value[0]].value]);
-              }}
-              className="bg-[#E9EAF3] my-6"
-            />
-            <div className="flex justify-between mt-2">
+            <div className="w-full">
+              <Slider
+                defaultValue={[0]}
+                max={pricePoints.length - 1}
+                min={0}
+                step={1}
+                value={[
+                  pricePoints.findIndex(
+                    (p) => p.value === formData.priceRange[0]
+                  ),
+                ]}
+                onValueChange={(value) => {
+                  updateFormData("priceRange", [pricePoints[value[0]].value]);
+                }}
+                className="bg-[#E9EAF3] my-6 text-center mx-auto"
+              />
+            </div>
+            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
           </div>
 
-          <div className="flex justify-between items-center px-20 py-8 mt-auto">
+          <div className="flex justify-between items-center gap-4 px-8 sm:px-10 lg:px-20 py-8 mt-auto">
             <Button
               className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
@@ -448,9 +394,12 @@ const SellMultipleFormWithModul = () => {
     // Step 3: Agent Question
     {
       content: (
-        <div className="md:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div
+          className="w-full h-full l
+      md:h-[80vh] mx-auto flex flex-col px-3 select-none"
+        >
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Have you already hired a real estate agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -502,9 +451,9 @@ const SellMultipleFormWithModul = () => {
     // Step 4: Selling Question
     {
       content: (
-        <div className="lg:w-[815px] px-3 h-[80vh] mx-auto flex flex-col select-none">
+        <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Are you also looking to sell a home?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -557,9 +506,9 @@ const SellMultipleFormWithModul = () => {
     // Step 5: Additional Details
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
           <div className=" mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Are there any other details you’d like to share?
             </h2>
           </div>
@@ -598,11 +547,11 @@ const SellMultipleFormWithModul = () => {
       content: (
         <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
           <div className="mb-4 mt-24">
-            <h2 className="font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+            <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
           </div>
-          <p className="md:text-lg text-gray-600">
+          <p className="text-sm md:text-lg text-gray-600">
             This is where RealEstateAgents.com and our agents will contact you
             to discuss your needs
           </p>
@@ -613,7 +562,7 @@ const SellMultipleFormWithModul = () => {
                   placeholder="First name"
                   value={formData.firstName}
                   onChange={(e) => updateFormData("firstName", e.target.value)}
-                  className="px-5 py-6 bg-[#ECEFF3]"
+                  className="px-5 py-6 bg-[#ECEFF3] placeholder:text-sm md:placeholder:text-lg"
                 />
                 {errors.firstName && (
                   <p className="text-red-500 text-sm mt-1">
@@ -626,7 +575,7 @@ const SellMultipleFormWithModul = () => {
                   placeholder="Last name"
                   value={formData.lastName}
                   onChange={(e) => updateFormData("lastName", e.target.value)}
-                  className="px-5 py-6 bg-[#ECEFF3]"
+                  className="px-5 py-6 bg-[#ECEFF3] placeholder:text-sm md:placeholder:text-lg"
                 />
                 {errors.lastName && (
                   <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
@@ -639,7 +588,7 @@ const SellMultipleFormWithModul = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => updateFormData("email", e.target.value)}
-                className="px-5 py-6 bg-[#ECEFF3]"
+                className="px-5 py-6 bg-[#ECEFF3] placeholder:text-sm md:placeholder:text-lg"
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -657,7 +606,7 @@ const SellMultipleFormWithModul = () => {
             </div>
           </div>
 
-          <p className="text-lg font-normal text-gray-500 mt-4">
+          <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
             By clicking &#34;Get Agents&#34; I acknowledge and agree to
             RealEstateAgents{" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
@@ -729,7 +678,7 @@ const SellMultipleFormWithModul = () => {
               Text Confirmation Code
             </Button>
           </div>
-          <p className="text-gray-500 md:text-lg mt-10 md:mt-0">
+          <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
             By clicking &quot;Text Confirmation Code&quot;, I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
@@ -900,7 +849,7 @@ const SellMultipleFormWithModul = () => {
   return (
     <div className="bg-gray-100 flex flex-col items-center justify-center rounded-2xl">
       {currentStep === 0 ? (
-        <div className="max-w-[1087px] rounded-b-xl bg-white rounded-tr-2xl">
+        <div className="max-w-[1087px]  rounded-b-xl bg-white md:rounded-tr-2xl">
           {steps[0].content}
         </div>
       ) : (
