@@ -773,13 +773,13 @@ const BuyMultipleFormWithMudal = () => {
     // Step 8: Thank you
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col">
+        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 md:px-10">
           <div className=" mb-4 mt-10">
             <div>
               <img
                 src={thankYou}
                 alt="Thank you image"
-                className="mx-auto w-64 my-4"
+                className="mx-auto w-40 md:w-64 my-4"
               />
               <div className="text-center">
                 <h2 className="text-2xl md:text-4xl font-semibold text-[#0F113A] mb-4">
@@ -802,26 +802,26 @@ const BuyMultipleFormWithMudal = () => {
             {/* Centered Unordered List */}
             <ul className="list-none mx-auto mt-6 md:space-y-4 text-gray-700">
               <li className="flex items-center justify-center">
-                <span className="text-green-600 mr-3 text-xl">✔️</span>
-                <span className="text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Sold over 100+ homes in your market
                 </span>
               </li>
               <li className="flex items-center justify-center">
-                <span className="text-green-600 mr-3 text-xl">✔️</span>
-                <span className="text-lg font-medium">
+              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+              <span className="md:text-lg font-medium">
                   Have over 50 5-Star reviews
                 </span>
               </li>
               <li className="flex items-center justify-center">
-                <span className="text-green-600 mr-3 text-xl">✔️</span>
-                <span className="text-lg font-medium">
+              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+              <span className="md:text-lg font-medium">
                   Specialize in buying or listing property
                 </span>
               </li>
               <li className="flex items-center justify-center">
-                <span className="text-green-600 mr-3 text-xl">✔️</span>
-                <span className="text-lg font-medium">
+              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+              <span className="md:text-lg font-medium">
                   Have been in the business for 5+ years
                 </span>
               </li>

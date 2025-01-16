@@ -146,12 +146,12 @@ export const LocationStep = ({ formData, updateFormData, handleNext, placeholder
         <TopArrowIcon />
       </Button>
     </div>
-    {error && <p className="text-red-500 text-sm">{error}</p>}
-    {isSearching && <div className="mt-2 text-gray-600">Searching...</div>}
+    {error && <p className="text-red-500 text-sm md:text-lg p-2 px-5">{error}</p>}
+    {isSearching && <div className="mt-2 text-gray-600 text-sm md:text-lg p-2 px-5">Searching...</div>}
 
     {/* Box for Search Results */}
     {searchResults.length > 0 && (
-      <div className="absolute bg-white top-[64px] left-0 mt-2 border rounded-md max-h-[250px] lg:max-h-[300px] w-full overflow-y-auto text-sm md:text-base lg:text-lg">
+      <div className="absolute bg-white top-[70px] left-0 mt-2 border rounded-md max-h-[250px] lg:max-h-[300px] w-full overflow-y-auto text-sm md:text-base lg:text-lg">
         {searchResults.map((result, index) => {
           const formattedName = formatDisplayName(result.display_name);
           return (
