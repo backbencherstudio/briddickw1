@@ -126,7 +126,7 @@ export const LocationStep = ({ formData, updateFormData, handleNext, placeholder
   <div className="relative px-4 py-1 w-[328px] md:w-[700px] lg:w-[987px] lg:rounded-2xl">
     <div className="p-4 lg:flex items-center gap-4 lg:rounded-2xl">
       <Input
-        className={`py-7 placeholder:text-sm md:placeholder:text-base lg:placeholder:text-xl flex-grow border-none outline-none ${
+        className={`py-7 placeholder:text-sm md:placeholder:text-lg lg:placeholder:text-xl flex-grow border-none outline-none ${
           error ? "border-red-500" : ""
         }`}
         placeholder={placeholderTitle}
