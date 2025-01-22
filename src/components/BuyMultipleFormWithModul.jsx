@@ -506,7 +506,7 @@ const BuyMultipleFormWithMudal = () => {
     // Step 6: Additional Details
     {
       content: (
-        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div className="w-full h-full py-5 mx-auto flex flex-col px-3 select-none">
           <div className=" mb-4 mt-24">
             <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Are there any other details you’d like to share?
@@ -545,8 +545,8 @@ const BuyMultipleFormWithMudal = () => {
     // Step 7: Contact Details
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-24">
+        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
+          <div className="mb-4 mt-5">
             <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
@@ -632,7 +632,7 @@ const BuyMultipleFormWithMudal = () => {
     // Step 8: Phone Verification
     {
       content: (
-        <div className="md:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
+        <div className="md:w-[815px] py-5 mx-auto flex  flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl lg:text-3xl font-semibold">
               We’re preparing to connect you to at least 3 agents. Please verify
@@ -695,7 +695,7 @@ const BuyMultipleFormWithMudal = () => {
     // Step 8: OTP Verification
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 lg:px-0">
+        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-4 lg:px-0">
           <div className=" mb-4 mt-24">
             <div className="w-full">
               <img

@@ -545,8 +545,8 @@ const SellMultipleFormWithModul = () => {
     // Step 6: Contact Details
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-24">
+        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
+          <div className="mb-4 mt-4">
             <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
@@ -632,8 +632,8 @@ const SellMultipleFormWithModul = () => {
     // Step 7: Phone Verification
     {
       content: (
-        <div className="md:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
-          <div className="mb-4 mt-5 md:mt-24">
+        <div className="md:w-[815px] py-5 mx-auto flex  flex-col px-3 select-none">
+          <div className="mb-4 mt-5 md:mt-16">
             <h2 className="text-[#0F113A] text-xl md:text-3xl font-semibold">
               We’re preparing to connect you to at least 3 agents. Please verify
               the following information to get connected sooner:
@@ -695,8 +695,8 @@ const SellMultipleFormWithModul = () => {
     // Step 8: OTP Verification
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 md:px-0 select-none">
-          <div className=" mb-4 mt-24">
+        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-4 md:px-0 select-none">
+          <div className=" mb-4 mt-16">
             <div className="w-full">
               <img
                 src={msg}

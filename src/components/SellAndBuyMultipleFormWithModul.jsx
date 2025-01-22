@@ -451,7 +451,7 @@ const SellAndBuyMultipleFormWithModul = () => {
           formData={formData}
           updateFormData={updateFormData}
           handleNext={handleNext}
-          placeholderTitle="Enter the address you are selling"
+          placeholderTitle="Enter the address you are sell and buy"
         />
       ),
     },
