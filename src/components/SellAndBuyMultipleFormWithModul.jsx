@@ -30,12 +30,10 @@ const ProgressBar = ({ currentStep, totalSteps }) => {
 
 const INITIAL_FORM_DATA = {
   addressToSell: "",
-  // yourAddress: "",
   homePriceRange: [500],
   cityToBuy: "",
   lookingPriceRange: [500],
   hasAgent: null,
-  // lookingToSell: false,
   additionalDetails: "",
   firstName: "",
   lastName: "",
@@ -94,78 +92,9 @@ const SellAndBuyMultipleFormWithModul = () => {
   const [errors, setErrors] = useState(INITIAL_ERRORS);
 
   const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1); // Track focused result index
   const [error, setError] = useState(""); // For validation message
 
-  // 1) Helper function to reshape the display_name
-  const formatDisplayName = (rawDisplayName) => {
-    const parts = rawDisplayName.split(",").map((item) => item.trim());
-    const street = parts[0] && parts[1] ? `${parts[0]} ${parts[1]}` : parts[0];
-
-    let city = "";
-    for (let i = 2; i < parts.length; i++) {
-      const val = parts[i].toLowerCase();
-
-      if (
-        !val.includes("washington") &&
-        !val.includes("united states") &&
-        !val.includes("county") &&
-        !/^\d+$/.test(val)
-      ) {
-        city = parts[i];
-        break;
-      }
-    }
-
-    const state = "WA";
-    return `${street || ""}, ${city || ""}, ${state}`;
-  };
-
-  const searchLocation = async (query) => {
-    if (!query) {
-      setSearchResults([]);
-      setFocusedIndex(-1);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${query},Washington&format=json&countrycodes=us`
-      );
-      const data = await response.json();
-      console.log("data:", data);
-
-      // Filter to ensure we only keep US addresses (if you want)
-      const usLocations = data.filter((result) =>
-        result.display_name.includes("United States")
-      );
-      setSearchResults(usLocations);
-      setFocusedIndex(-1);
-    } catch (error) {
-      console.error("Error searching locations:", error);
-      toast.error("Error searching locations. Please try again.");
-    }
-    setIsSearching(false);
-  };
-
-  const handleLocationSelect = (location) => {
-    // 2) Format the display_name
-    const formattedAddress = formatDisplayName(location.display_name);
-
-    // 3) Update form data with the shorter version
-    updateFormData("cityToBuy", formattedAddress);
-    // updateFormData("coordinates", {
-    //   lat: parseFloat(location.lat),
-    //   lng: parseFloat(location.lon),
-    // });
-
-    // Close search results
-    setSearchResults([]);
-    setFocusedIndex(-1);
-    setError(""); // Clear error if any
-  };
 
   const handleKeyDown = (event) => {
     if (searchResults.length === 0) return;
@@ -252,35 +181,56 @@ const SellAndBuyMultipleFormWithModul = () => {
       return;
     }
 
-    setIsLoading(true); // Show the loading spinner
+    setIsLoading(true);
 
     setTimeout(() => {
-      setIsLoading(false); // Hide the spinner after 3 seconds
-      setCurrentStep(steps.length - 1); // Navigate to thank you page
+      setIsLoading(false);
+      setCurrentStep(steps.length - 1);
       toast.success("OTP Verified Successfully!");
     }, 3000);
 
     const finalFormData = {
       ...formData,
       otp: otpValues,
+      // Format price ranges for better readability
+      homePriceRangeFormatted: formatPriceRange(formData.homePriceRange[0]),
+      lookingPriceRangeFormatted: formatPriceRange(formData.lookingPriceRange[0])
     };
-    console.log("Final form data:", finalFormData);
+
+    // Log all form data to console
+    console.log("Final form submission data:", {
+      addressToSell: finalFormData.addressToSell,
+      homePriceRange: finalFormData.homePriceRangeFormatted,
+      cityToBuy: finalFormData.cityToBuy, 
+      lookingPriceRange: finalFormData.lookingPriceRangeFormatted,
+      hasAgent: finalFormData.hasAgent ? "Yes" : "No",
+      additionalDetails: finalFormData.additionalDetails,
+      firstName: finalFormData.firstName,
+      lastName: finalFormData.lastName,
+      email: finalFormData.email,
+      phoneNumber: finalFormData.phoneNumber,
+      otp: finalFormData.otp
+    });
+
+    // Send email with all form data
     await sendEmail({
       serviceId: "service_wabre9b",
-      templateId: "template_sp4ythw",
+      templateId: "template_sp4ythw", 
       publicKey: "JKWvE6lLACENhmYIi",
       senderName: "Briddick",
       senderEmail: "tqmhosain@gmail.com",
-      recipientEmails: finalFormData?.email,
+      recipientEmails: finalFormData.email,
       details: {
-        firstName: finalFormData?.firstName,
-        lastName: finalFormData?.lastName,
-        lookingToSell: finalFormData?.lookingToSell ? "Yes" : "No",
-        hasAgent: finalFormData?.hasAgent ? "Yes" : "No",
-        phoneNumber: finalFormData?.phoneNumber,
-        priceRange: finalFormData?.priceRange,
+        firstName: finalFormData.firstName,
+        lastName: finalFormData.lastName,
+        addressToSell: finalFormData.addressToSell,
+        homePriceRange: finalFormData.homePriceRangeFormatted,
+        cityToBuy: finalFormData.cityToBuy,
+        lookingPriceRange: finalFormData.lookingPriceRangeFormatted,
+        hasAgent: finalFormData.hasAgent ? "Yes" : "No",
+        phoneNumber: finalFormData.phoneNumber,
         additionalDetails: finalFormData.additionalDetails,
-        replyTo: finalFormData?.email,
+        replyTo: finalFormData.email
       },
     });
     console.log("Email sent successfully!");
@@ -412,10 +362,6 @@ const SellAndBuyMultipleFormWithModul = () => {
     }
   };
 
-  // const handleSliderChange = (value) => {
-  //   const nearestPoint = findNearestPricePoint(value[0]);
-  //   updateFormData("homePriceRange", [nearestPoint.value]);
-  // };
 
   // looking price range
   const lookingPriceHandleDecrease = () => {
@@ -437,11 +383,6 @@ const SellAndBuyMultipleFormWithModul = () => {
       ]);
     }
   };
-
-  // const lookingPriceHandleSliderChange = (value) => {
-  //   const nearestPoint = findNearestPricePoint(value[0]);
-  //   updateFormData("lookingPriceRange", [nearestPoint.value]);
-  // };
 
   const steps = [
     // Step 1: Location Input (outside modal)
@@ -530,67 +471,22 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 3: Enter you Buy Location
     {
       content: (
-        <div
-        className="w-full h-full l
-    md:h-[80vh] mx-auto flex flex-col px-3 select-none"
-      >
-        <div className="mb-4 mt-24">
-          <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+        <div className="w-full h-full l md:h-[80vh] mx-auto flex flex-col px-3 select-none">
+          <div className="mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               Where are you looking to buy?
             </h2>
 
-            {/* added search */}
-            <div className="flex items-center gap-4 py-4">
+            <div className="gap-4 py-4">
               <div className="w-full">
-                {/* input box */}
-                <div
-                  className=" bg-white flex flex-col rounded-2xl rounded-tl-none"
-                  style={{ borderRadius: "20px" }}
-                >
-                  <div className="">
-                    <div className=" flex items-center gap-4">
-                      <Input
-                        className={`py-7 lg:placeholder:text-xl flex-grow border-none outline-none ${
-                          error ? "border-red-500" : ""
-                        }`}
-                        placeholder="Enter the address you are selling"
-                        value={formData.cityToBuy}
-                        onChange={(e) => {
-                          updateFormData("cityToBuy", e.target.value);
-                          searchLocation(e.target.value);
-                          setError(""); // Clear error on input change
-                        }}
-                      />
-                    </div>
-                    {error && <p className="text-red-500 text-sm md:text-lg py-2 md:py-3">{error}</p>}
-                    {isSearching && (
-                      <div className="mt-2 text-gray-600">Searching...</div>
-                    )}
-                    {searchResults.length > 0 && (
-                      <div className="mt-2 border rounded-md shadow-lg">
-                        {searchResults.map((result, index) => {
-                          // Format each display_name for list rendering
-                          const formattedName = formatDisplayName(
-                            result.display_name
-                          );
-                          return (
-                            <div
-                              key={index}
-                              className={`p-2 cursor-pointer ${
-                                index === focusedIndex
-                                  ? "bg-gray-200"
-                                  : "hover:bg-gray-100 rounded-2xl"
-                              }`}
-                              onClick={() => handleLocationSelect(result)}
-                            >
-                              {formattedName}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <LocationStep
+              formData={formData}
+              updateFormData={(field, value) => updateFormData("cityToBuy", value)}
+              handleNext={handleNext}
+              placeholderTitle="Enter the address where you want to buy"
+              showCompareButton={false}  // Changed from hideCompareAgents to showCompareButton
+              className='w-full bg-red-600'
+            />
               </div>
             </div>
           </div>
@@ -608,7 +504,7 @@ const SellAndBuyMultipleFormWithModul = () => {
             <Button
               className="flex items-center gap-1 bg-[#23298B] text-white shadow-sm hover:text-[#23298B] transition-all duration-300 ease-in-out"
               variant="primary"
-              onClick={handleCityNext}
+              onClick={handleNext}
             >
               Next
               <RightArrowIcon className="w-6 h-6" />
@@ -618,7 +514,7 @@ const SellAndBuyMultipleFormWithModul = () => {
       ),
     },
 
-    // Step 3: Price Range looking buy
+    // Step 4: Price Range looking buy
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
@@ -695,7 +591,7 @@ const SellAndBuyMultipleFormWithModul = () => {
       ),
     },
 
-    // Step 4: Agent Question
+    // Step 5: Agent Question
     {
       content: (
         <div
@@ -758,7 +654,7 @@ const SellAndBuyMultipleFormWithModul = () => {
         <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
           <div className="mb-4 mt-24">
             <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are there any other details you’d like to share?
+              Are there any other details you'd like to share?
             </h2>
           </div>
           <textarea
@@ -856,7 +752,7 @@ const SellAndBuyMultipleFormWithModul = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking &#34;Get Agents&#34; I acknowledge and agree to
+            By clicking "Get Agents" I acknowledge and agree to
             RealEstateAgents{" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
@@ -884,7 +780,7 @@ const SellAndBuyMultipleFormWithModul = () => {
         <div className="md:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl md:text-3xl font-semibold">
-              We’re preparing to connect you to at least 3 agents. Please verify
+              We're preparing to connect you to at least 3 agents. Please verify
               the following information to get connected sooner:
             </h2>
           </div>
@@ -928,7 +824,7 @@ const SellAndBuyMultipleFormWithModul = () => {
             </Button>
           </div>
           <p className="text-gray-500 text-sm md:text-lg  md:mt-0">
-            By clicking &quot;Text Confirmation Code&quot;, I am providing my
+            By clicking "Text Confirmation Code", I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
             to contact me at the phone number above for marketing purposes,
@@ -1003,7 +899,7 @@ const SellAndBuyMultipleFormWithModul = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn’t receive a code?{" "}
+              Didn't receive a code?{" "}
               <span
                 className="text-indigo-600 font-semibold cursor-pointer hover:underline"
                 onClick={handleBack}
@@ -1094,6 +990,45 @@ const SellAndBuyMultipleFormWithModul = () => {
       ),
     },
   ];
+
+  // Add this new function to handle Enter key press
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      
+      // Handle different steps differently if needed
+      switch (currentStep) {
+        case 0:
+          handleNext();
+          break;
+        case 2: // City input step
+          if (validateCityInput()) {
+            handleNext();
+          }
+          break;
+        case 5: // Contact details step
+          if (validateContactDetails()) {
+            handleNext();
+          }
+          break;
+        case 6: // Phone verification step
+          if (validatePhoneNumber()) {
+            handleNext();
+          }
+          break;
+        default:
+          handleNext();
+      }
+    }
+  };
+
+  // Add useEffect to attach/detach the event listener
+  useEffect(() => {
+    window.addEventListener('keypress', handleKeyPress);
+    return () => {
+      window.removeEventListener('keypress', handleKeyPress);
+    };
+  }, [currentStep, formData]); // Add dependencies that are used in handleKeyPress
 
   return (
     <div className="bg-gray-100 flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">

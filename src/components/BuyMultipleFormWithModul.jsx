@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -124,12 +124,18 @@ const BuyMultipleFormWithMudal = () => {
       return;
     }
 
-    setIsLoading(true); // Show the loading spinner
+    setIsLoading(true);
+
+    const otp = localStorage.getItem("zi5jd");
+    if (otpValues !== otp) {
+      toast.error("OTP is incorrect");
+      setIsLoading(false);
+      return;
+    }
 
     setTimeout(() => {
-      setIsLoading(false); // Hide the spinner after 3 seconds
-      setCurrentStep(steps.length - 1); // Navigate to thank you page
-      toast.success("OTP Verified Successfully!");
+      setIsLoading(false);
+      setCurrentStep(steps.length - 1);
     }, 3000);
 
     const finalFormData = {
@@ -137,6 +143,7 @@ const BuyMultipleFormWithMudal = () => {
       otp: otpValues,
     };
 
+    console.log("Complete form data:", finalFormData); // Log complete form data
 
     await sendEmail({
       serviceId: "service_wabre9b",
@@ -144,26 +151,33 @@ const BuyMultipleFormWithMudal = () => {
       publicKey: "JKWvE6lLACENhmYIi",
       senderName: "Briddick",
       senderEmail: "tqmhosain@gmail.com",
-      recipientEmails:  finalFormData?.email,  
+      recipientEmails: finalFormData?.email,
       details: {
         firstName: finalFormData?.firstName,
         lastName: finalFormData?.lastName,
+        addressToSell: finalFormData?.addressToSell || "No address provided",
         lookingToSell: finalFormData?.lookingToSell ? "Yes" : "No",
         hasAgent: finalFormData?.hasAgent ? "Yes" : "No",
         phoneNumber: finalFormData?.phoneNumber,
         priceRange: finalFormData?.priceRange,
-        additionalDetails: finalFormData.additionalDetails,
+        additionalDetails: finalFormData?.additionalDetails,
         replyTo: finalFormData?.email,
       },
     });
-    console.log("Email sent successfully!");
-    
-    console.log("Final form data:", finalFormData);
 
-    // // Successful submission feedback
-    // toast.success("OTP Verified Successfully!");
+    console.log("Email details sent:", {  // Log email details
+      firstName: finalFormData?.firstName,
+      lastName: finalFormData?.lastName,
+      addressToSell: finalFormData?.addressToSell || "No address provided",
+      lookingToSell: finalFormData?.lookingToSell ? "Yes" : "No",
+      hasAgent: finalFormData?.hasAgent ? "Yes" : "No",
+      phoneNumber: finalFormData?.phoneNumber,
+      priceRange: finalFormData?.priceRange,
+      additionalDetails: finalFormData?.additionalDetails,
+      replyTo: finalFormData?.email,
+    });
 
-    // setCurrentStep(steps.length - 1); // Navigate to the next step
+    toast.success("OTP Verified Successfully!");
   };
 
   const handleOtpInput = (e, index) => {
@@ -303,6 +317,88 @@ const BuyMultipleFormWithMudal = () => {
     }
   };
 
+  // Add Enter key handling
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Handle OTP verification separately
+      if (currentStep === 7) {
+        const otpValues = inputRefs.current.map((input) => input.value).join("");
+        if (otpValues.length === 6) {
+          handleSubmit();
+        }
+        return;
+      }
+
+      // Handle other steps
+      switch (currentStep) {
+        case 0:
+          if (formData.addressToSell.trim()) {
+            handleNext();
+          }
+          break;
+
+        case 1: // Price Range step
+          if (formData.priceRange[0]) {
+            handleNext();
+          }
+          break;
+
+        case 2: // Agent Question
+          if (formData.hasAgent !== null) {
+            handleNext();
+          }
+          break;
+
+        case 3: // Looking to Sell Question
+          if (formData.lookingToSell !== null) {
+            handleNext();
+          }
+          break;
+
+        case 4: // Additional Details
+          handleNext(); // Additional details is optional
+          break;
+
+        case 5: // Contact Details
+          if (validateContactDetails()) {
+            handleContactNext();
+          }
+          break;
+
+        case 6: // Phone Verification
+          if (formData.phoneNumber.trim()) {
+            handlePhoneVerificationNext();
+          }
+          break;
+      }
+    }
+  }, [
+    currentStep, 
+    formData, 
+    handleNext, 
+    handleSubmit, 
+    validateContactDetails, 
+    handleContactNext, 
+    handlePhoneVerificationNext
+  ]);
+
+  // Add useEffect to handle the keypress event
+  useEffect(() => {
+    const handleGlobalKeyPress = (e) => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+        // Don't trigger navigation if user is typing in a form field
+        return;
+      }
+      handleKeyPress(e);
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyPress);
+    };
+  }, [handleKeyPress]); // Now we only depend on the memoized handleKeyPress
 
   const steps = [
     // Step 1: Location Input (outside modal)
@@ -509,7 +605,7 @@ const BuyMultipleFormWithMudal = () => {
         <div className="w-full h-full py-5 mx-auto flex flex-col px-3 select-none">
           <div className=" mb-4 mt-24">
             <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are there any other details you’d like to share?
+              Are there any other details you'd like to share?
             </h2>
           </div>
           <textarea
@@ -607,7 +703,7 @@ const BuyMultipleFormWithMudal = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking &#34;Get Agents&#34; I acknowledge and agree to
+            By clicking "Get Agents" I acknowledge and agree to
             RealEstateAgents{" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
@@ -635,7 +731,7 @@ const BuyMultipleFormWithMudal = () => {
         <div className="md:w-[815px] py-5 mx-auto flex  flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl lg:text-3xl font-semibold">
-              We’re preparing to connect you to at least 3 agents. Please verify
+              We're preparing to connect you to at least 3 agents. Please verify
               the following information to get connected sooner:
             </h2>
           </div>
@@ -679,7 +775,7 @@ const BuyMultipleFormWithMudal = () => {
             </Button>
           </div>
           <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
-            By clicking &quot;Text Confirmation Code&quot;, I am providing my
+            By clicking "Text Confirmation Code", I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
             to contact me at the phone number above for marketing purposes,
@@ -754,7 +850,7 @@ const BuyMultipleFormWithMudal = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn’t receive a code?{" "}
+              Didn't receive a code?{" "}
           
               <span className="text-indigo-600 font-semibold cursor-pointer hover:underline" onClick={handleBack}>
                 create a new request

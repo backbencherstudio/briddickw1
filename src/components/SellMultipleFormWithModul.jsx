@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -126,11 +126,10 @@ const SellMultipleFormWithModul = () => {
       return;
     }
 
-    setIsLoading(true); // Show the loading spinner
+    setIsLoading(true);
 
     setTimeout(() => {
-      setIsLoading(false); // Hide the spinner after 3 seconds
-      // Navigate to thank you page
+      setIsLoading(false);
     }, 3000);
 
     const otp = localStorage.getItem("zi5jd");
@@ -162,21 +161,15 @@ const SellMultipleFormWithModul = () => {
         priceRange: finalFormData?.priceRange,
         additionalDetails: finalFormData.additionalDetails,
         replyTo: finalFormData?.email,
+        addressToSell: finalFormData.addressToSell,
       },
     });
     console.log("Email sent successfully!");
-
-    // sendEmail(finalFormData);
 
     toast.success("OTP Verified Successfully!");
     setCurrentStep(steps.length - 1);
 
     console.log("Final form data:", finalFormData);
-
-    // // Successful submission feedback
-    // toast.success("OTP Verified Successfully!");
-
-    // setCurrentStep(steps.length - 1); // Navigate to the next step
   };
 
   const handleOtpInput = (e, index) => {
@@ -509,7 +502,7 @@ const SellMultipleFormWithModul = () => {
         <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
           <div className=" mb-4 mt-24">
             <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are there any other details you’d like to share?
+              Are there any other details you'd like to share?
             </h2>
           </div>
           <textarea
@@ -635,7 +628,7 @@ const SellMultipleFormWithModul = () => {
         <div className="md:w-[815px] py-5 mx-auto flex  flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-16">
             <h2 className="text-[#0F113A] text-xl md:text-3xl font-semibold">
-              We’re preparing to connect you to at least 3 agents. Please verify
+              We're preparing to connect you to at least 3 agents. Please verify
               the following information to get connected sooner:
             </h2>
           </div>
@@ -754,7 +747,7 @@ const SellMultipleFormWithModul = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn’t receive a code?{" "}
+              Didn't receive a code?{" "}
               <span
                 className="text-indigo-600 font-semibold cursor-pointer hover:underline"
                 onClick={handleBack}
@@ -845,6 +838,72 @@ const SellMultipleFormWithModul = () => {
       ),
     },
   ];
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Handle OTP verification separately
+      if (currentStep === 7) {
+        const otpValues = inputRefs.current.map((input) => input.value).join("");
+        if (otpValues.length === 6) {
+          handleSubmit();
+        }
+        return;
+      }
+
+      // Handle other steps
+      switch (currentStep) {
+        case 0:
+          if (formData.addressToSell.trim()) {
+            handleNext();
+          }
+          break;
+
+        case 1:
+          if (formData.priceRange[0]) {
+            handleNext();
+          }
+          break;
+
+        case 2:
+          if (formData.hasAgent !== null) {
+            handleNext();
+          }
+          break;
+
+        case 3:
+          if (formData.lookingToSell !== null) {
+            handleNext();
+          }
+          break;
+
+        case 4:
+          handleNext(); // Additional details is optional
+          break;
+
+        case 5:
+          if (validateContactDetails()) {
+            handleContactNext();
+          }
+          break;
+
+        case 6:
+          if (formData.phoneNumber.trim()) {
+            handlePhoneVerificationNext();
+          }
+          break;
+      }
+    }
+  };
+
+  // Add useEffect to attach/detach the event listener
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentStep, formData]); // Add dependencies that the handler uses
 
   return (
     <div className="bg-gray-100 flex flex-col items-center justify-center rounded-2xl">
