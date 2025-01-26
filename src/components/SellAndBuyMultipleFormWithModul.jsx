@@ -181,6 +181,13 @@ const SellAndBuyMultipleFormWithModul = () => {
       return;
     }
 
+    const storedOtp = localStorage.getItem("zi5jd");
+    if (otpValues !== storedOtp) {
+      toast.error("Invalid OTP. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -301,7 +308,7 @@ const SellAndBuyMultipleFormWithModul = () => {
   const validatePhoneNumber = async() => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
-    
+    console.log("hit")
     // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
     const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
     const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
@@ -360,7 +367,7 @@ const SellAndBuyMultipleFormWithModul = () => {
 
   const handlePhoneVerificationNext = () => {
     if (validatePhoneNumber()) {
-      handleNext(); // Proceed to next step if phone number is valid
+      handleNext(); 
     }
   };
 

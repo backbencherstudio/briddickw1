@@ -139,7 +139,7 @@ const SellMultipleFormWithModul = () => {
       // Format the data according to your needs
       const finalFormData = {
         additionalDetails: formData.additionalDetails,
-        addressToSell: formData.addressToSell,
+        addressToSell: formData.addressToSell.description,
         email: formData.email,
         firstName: formData.firstName,
         hasAgent: formData.hasAgent,

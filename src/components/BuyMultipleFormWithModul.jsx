@@ -37,7 +37,7 @@ const INITIAL_FORM_DATA = {
   firstName: "",
   lastName: "",
   email: "",
-  phoneNumber: ""
+  phoneNumber: "",
 };
 
 const INITIAL_ERRORS = {
@@ -115,9 +115,9 @@ const BuyMultipleFormWithMudal = () => {
     }
   };
 
-  const handleSubmit = async () => { 
+  const handleSubmit = async () => {
     const otpValues = inputRefs.current.map((input) => input.value).join("");
-   
+
     if (otpValues.length < 6) {
       toast.error("Please enter a valid 6-digit OTP.");
       return;
@@ -132,48 +132,44 @@ const BuyMultipleFormWithMudal = () => {
       return;
     }
 
+    console.log("formData", formData);
     // Format the data according to API requirements
     const finalFormData = {
-      additionalDetails: formData.additionalDetails || "",
-      // Handle both cases where addressToSell is an object or string
-      addressToSell: typeof formData.addressToSell === 'object' 
-        ? formData.addressToSell.description 
-        : formData.addressToSell || "",
-      email: formData.email || "",
-      firstName: formData.firstName || "",
-      hasAgent: formData.hasAgent === true, // Convert to boolean
-      lastName: formData.lastName || "",
-      lookingToSell: formData.lookingToSell === true, // Convert to boolean
+      additionalDetails: formData.additionalDetails,
+      addressToSell: formData.lookingToSell, 
+      email: formData.email,
+      firstName: formData.firstName,
+      hasAgent: formData.hasAgent,
+      lastName: formData.lastName,
+      lookingToSell: formData.addressToSell.description,
       otp: otpValues,
-      phoneNumber: formData.phoneNumber?.startsWith('+') 
-        ? formData.phoneNumber 
-        : `+${formData.phoneNumber}` || "",
-      priceRange: formatPriceRange(formData.priceRange[0]) || ""
+      phoneNumber: formData.phoneNumber,
+      priceRange: formatPriceRange(formData.priceRange[0]),
     };
 
     try {
       // Log the data being sent for debugging
       console.log("Sending data to API:", finalFormData);
 
-      const response = await fetch('http://192.168.40.47:3002/email/buy', {
-        method: 'POST',
+      const response = await fetch("http://192.168.40.47:3002/email/buy", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(finalFormData)
+        body: JSON.stringify(finalFormData),
       });
 
       const responseData = await response.json();
       console.log("API Response:", responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to submit form');
+        throw new Error(responseData.error || "Failed to submit form");
       }
 
       toast.success("Form submitted successfully!");
       setCurrentStep(steps.length - 1);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
       toast.error("Failed to submit form. Please try again.");
     } finally {
       setIsLoading(false);
@@ -249,25 +245,25 @@ const BuyMultipleFormWithMudal = () => {
   };
 
   // Phone number validation function
-  const validatePhoneNumber = async() => {
+  const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
-    
-    // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
-    const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
-    const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
-    
-    const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ''); // Remove any spaces, dashes or dots
+
+    const usaPattern = /^\d{10}$/; 
+    const bdPattern = /^\d{11}$/; 
+
+    const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ""); // Remove any spaces, dashes or dots
 
     if (!phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
     } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
+      newErrors.phoneNumber =
+        "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
       isValid = false;
     }
 
-    if(isValid){
+    if (isValid) {
       try {
         // Format phone number with country code based on length
         let formattedPhone;
@@ -279,15 +275,16 @@ const BuyMultipleFormWithMudal = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch('http://192.168.40.47:3002/otp/send-otp', {
-          method: 'POST',
+        const response = await fetch("http://192.168.40.47:3002/otp/send-otp", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            phoneNumber: formattedPhone
-          })
+            phoneNumber: formattedPhone,
+          }),
         });
+        console.log(response, response)
 
         const data = await response.json();
 
@@ -299,7 +296,7 @@ const BuyMultipleFormWithMudal = () => {
           isValid = false;
         }
       } catch (error) {
-        console.error('Error sending OTP:', error);
+        console.error("Error sending OTP:", error);
         toast.error("Failed to send OTP. Please try again.");
         isValid = false;
       }
@@ -330,9 +327,8 @@ const BuyMultipleFormWithMudal = () => {
   //   });
   // };
 
-
   const formatPriceRange = (value) => {
-    const pointIndex = pricePoints.findIndex(p => p.value === value);
+    const pointIndex = pricePoints.findIndex((p) => p.value === value);
     return pricePoints[pointIndex].display;
   };
 
@@ -353,85 +349,90 @@ const BuyMultipleFormWithMudal = () => {
   };
 
   // Add Enter key handling
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      
-      // Handle OTP verification separately
-      if (currentStep === 7) {
-        const otpValues = inputRefs.current.map((input) => input.value).join("");
-        if (otpValues.length === 6) {
-          handleSubmit();
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        // Handle OTP verification separately
+        if (currentStep === 7) {
+          const otpValues = inputRefs.current
+            .map((input) => input.value)
+            .join("");
+          if (otpValues.length === 6) {
+            handleSubmit();
+          }
+          return;
         }
-        return;
+
+        // Handle other steps
+        switch (currentStep) {
+          case 0:
+            if (formData.addressToSell.trim()) {
+              handleNext();
+            }
+            break;
+
+          case 1: // Price Range step
+            if (formData.priceRange[0]) {
+              handleNext();
+            }
+            break;
+
+          case 2: // Agent Question
+            if (formData.hasAgent !== null) {
+              handleNext();
+            }
+            break;
+
+          case 3: // Looking to Sell Question
+            if (formData.lookingToSell !== null) {
+              handleNext();
+            }
+            break;
+
+          case 4: // Additional Details
+            handleNext(); // Additional details is optional
+            break;
+
+          case 5: // Contact Details
+            if (validateContactDetails()) {
+              handleContactNext();
+            }
+            break;
+
+          case 6: // Phone Verification
+            if (formData.phoneNumber.trim()) {
+              handlePhoneVerificationNext();
+            }
+            break;
+        }
       }
-
-      // Handle other steps
-      switch (currentStep) {
-        case 0:
-          if (formData.addressToSell.trim()) {
-            handleNext();
-          }
-          break;
-
-        case 1: // Price Range step
-          if (formData.priceRange[0]) {
-            handleNext();
-          }
-          break;
-
-        case 2: // Agent Question
-          if (formData.hasAgent !== null) {
-            handleNext();
-          }
-          break;
-
-        case 3: // Looking to Sell Question
-          if (formData.lookingToSell !== null) {
-            handleNext();
-          }
-          break;
-
-        case 4: // Additional Details
-          handleNext(); // Additional details is optional
-          break;
-
-        case 5: // Contact Details
-          if (validateContactDetails()) {
-            handleContactNext();
-          }
-          break;
-
-        case 6: // Phone Verification
-          if (formData.phoneNumber.trim()) {
-            handlePhoneVerificationNext();
-          }
-          break;
-      }
-    }
-  }, [
-    currentStep, 
-    formData, 
-    handleNext, 
-    handleSubmit, 
-    validateContactDetails, 
-    handleContactNext, 
-    handlePhoneVerificationNext
-  ]);
+    },
+    [
+      currentStep,
+      formData,
+      handleNext,
+      handleSubmit,
+      validateContactDetails,
+      handleContactNext,
+      handlePhoneVerificationNext,
+    ]
+  );
 
   // Add useEffect to handle the keypress event
   useEffect(() => {
     const handleGlobalKeyPress = (e) => {
-      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+      if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
         // Don't trigger navigation if user is typing in a form field
         return;
       }
       handleKeyPress(e);
     };
 
-    document.addEventListener('keydown', handleGlobalKeyPress);
+    document.addEventListener("keydown", handleGlobalKeyPress);
     return () => {
-      document.removeEventListener('keydown', handleGlobalKeyPress);
+      document.removeEventListener("keydown", handleGlobalKeyPress);
     };
   }, [handleKeyPress]); // Now we only depend on the memoized handleKeyPress
 
@@ -444,7 +445,7 @@ const BuyMultipleFormWithMudal = () => {
           formData={formData}
           updateFormData={updateFormData}
           handleNext={handleNext}
-          placeholderTitle='Enter your city name'
+          placeholderTitle="Enter your city name"
         />
       ),
     },
@@ -453,7 +454,7 @@ const BuyMultipleFormWithMudal = () => {
       content: (
         <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
-          <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
+            <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
               Roughly, what is your home worth?
             </h2>
           </div>
@@ -504,7 +505,7 @@ const BuyMultipleFormWithMudal = () => {
 
           <div className="flex justify-between items-center gap-4 px-8 sm:px-10 lg:px-20 py-8 mt-auto">
             <Button
-             className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
+              className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
               onClick={handleBack}
             >
@@ -526,11 +527,11 @@ const BuyMultipleFormWithMudal = () => {
     {
       content: (
         <div
-        className="w-full h-full l
+          className="w-full h-full l
     md:h-[80vh] mx-auto flex flex-col px-3 select-none"
-      >
+        >
           <div className="mb-4 mt-24">
-          <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
               What price range are you looking to buy?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -588,7 +589,7 @@ const BuyMultipleFormWithMudal = () => {
               Have you already hired a real estate Agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
-            <div className="flex space-x-4">
+              <div className="flex space-x-4">
                 <Button
                   variant={
                     formData.lookingToSell === true ? "primary" : "secondary"
@@ -610,7 +611,7 @@ const BuyMultipleFormWithMudal = () => {
           </div>
           {/* Footer Section for Buttons */}
           <div className="flex justify-between px-20 py-8 mt-auto">
-          <Button
+            <Button
               className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
               onClick={handleBack}
@@ -738,8 +739,7 @@ const BuyMultipleFormWithMudal = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking "Get Agents" I acknowledge and agree to
-            RealEstateAgents{" "}
+            By clicking "Get Agents" I acknowledge and agree to RealEstateAgents{" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
             includes binding arbitration and consent to receive electronic
@@ -810,15 +810,15 @@ const BuyMultipleFormWithMudal = () => {
             </Button>
           </div>
           <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
-            By clicking "Text Confirmation Code", I am providing my
-            esign and express written consent to allow ReferralExchange and our
-            affiliated Participating Agents, or parties calling on their behalf,
-            to contact me at the phone number above for marketing purposes,
-            including through the use of calls, SMS/MMS prerecorded and/or
-            artificial voice messages using an automated dialing system to
-            provide agent info, even if your number is listed on a corporate,
-            state or federal Do-Not-Call list. Consent is not a condition for
-            our service and you can revoke it at any time.
+            By clicking "Text Confirmation Code", I am providing my esign and
+            express written consent to allow ReferralExchange and our affiliated
+            Participating Agents, or parties calling on their behalf, to contact
+            me at the phone number above for marketing purposes, including
+            through the use of calls, SMS/MMS prerecorded and/or artificial
+            voice messages using an automated dialing system to provide agent
+            info, even if your number is listed on a corporate, state or federal
+            Do-Not-Call list. Consent is not a condition for our service and you
+            can revoke it at any time.
           </p>
         </div>
       ),
@@ -886,8 +886,10 @@ const BuyMultipleFormWithMudal = () => {
 
             <p className="text-sm mt-8 text-gray-500 text-center">
               Didn't receive a code?{" "}
-          
-              <span className="text-indigo-600 font-semibold cursor-pointer hover:underline" onClick={handleBack}>
+              <span
+                className="text-indigo-600 font-semibold cursor-pointer hover:underline"
+                onClick={handleBack}
+              >
                 create a new request
               </span>
             </p>
@@ -939,20 +941,20 @@ const BuyMultipleFormWithMudal = () => {
                 </span>
               </li>
               <li className="flex items-center justify-center">
-              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
-              <span className="md:text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Have over 50 5-Star reviews
                 </span>
               </li>
               <li className="flex items-center justify-center">
-              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
-              <span className="md:text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Specialize in buying or listing property
                 </span>
               </li>
               <li className="flex items-center justify-center">
-              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
-              <span className="md:text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Have been in the business for 5+ years
                 </span>
               </li>
