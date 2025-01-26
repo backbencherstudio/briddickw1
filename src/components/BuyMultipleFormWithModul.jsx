@@ -13,6 +13,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
 import { sendEmail } from "../lib/sendEmail";
 import sendOtpMessage from "../lib/sendMessage";
+import { baseurl } from "../util/base_url";
 
 // Progress bar component
 const ProgressBar = ({ currentStep, totalSteps }) => {
@@ -151,7 +152,7 @@ const BuyMultipleFormWithMudal = () => {
       // Log the data being sent for debugging
       console.log("Sending data to API:", finalFormData);
 
-      const response = await fetch("http://192.168.40.47:3002/email/buy", {
+      const response = await fetch(`${baseurl}/email/buy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -275,7 +276,7 @@ const BuyMultipleFormWithMudal = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch("http://192.168.40.47:3002/otp/send-otp", {
+        const response = await fetch(`${baseurl}/otp/send-otp`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
