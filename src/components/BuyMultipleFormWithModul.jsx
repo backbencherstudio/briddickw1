@@ -30,15 +30,14 @@ const ProgressBar = ({ currentStep, totalSteps }) => {
 
 const INITIAL_FORM_DATA = {
   addressToSell: "",
-  // cityToBuy: "",
   priceRange: [500],
-  hasAgent: null,
-  lookingToSell: null,
+  hasAgent: false,
+  lookingToSell: false,
   additionalDetails: "",
   firstName: "",
   lastName: "",
   email: "",
-  phoneNumber: "",
+  phoneNumber: ""
 };
 
 const INITIAL_ERRORS = {
@@ -116,9 +115,9 @@ const BuyMultipleFormWithMudal = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async () => { 
     const otpValues = inputRefs.current.map((input) => input.value).join("");
-
+   
     if (otpValues.length < 6) {
       toast.error("Please enter a valid 6-digit OTP.");
       return;
@@ -126,58 +125,59 @@ const BuyMultipleFormWithMudal = () => {
 
     setIsLoading(true);
 
-    const otp = localStorage.getItem("zi5jd");
-    if (otpValues !== otp) {
-      toast.error("OTP is incorrect");
+    const storedOtp = localStorage.getItem("zi5jd");
+    if (otpValues !== storedOtp) {
+      toast.error("Invalid OTP. Please try again.");
       setIsLoading(false);
       return;
     }
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setCurrentStep(steps.length - 1);
-    }, 3000);
-
+    // Format the data according to API requirements
     const finalFormData = {
-      ...formData,
+      additionalDetails: formData.additionalDetails || "",
+      // Handle both cases where addressToSell is an object or string
+      addressToSell: typeof formData.addressToSell === 'object' 
+        ? formData.addressToSell.description 
+        : formData.addressToSell || "",
+      email: formData.email || "",
+      firstName: formData.firstName || "",
+      hasAgent: formData.hasAgent === true, // Convert to boolean
+      lastName: formData.lastName || "",
+      lookingToSell: formData.lookingToSell === true, // Convert to boolean
       otp: otpValues,
+      phoneNumber: formData.phoneNumber?.startsWith('+') 
+        ? formData.phoneNumber 
+        : `+${formData.phoneNumber}` || "",
+      priceRange: formatPriceRange(formData.priceRange[0]) || ""
     };
 
-    console.log("Complete form data:", finalFormData); // Log complete form data
+    try {
+      // Log the data being sent for debugging
+      console.log("Sending data to API:", finalFormData);
 
-    await sendEmail({
-      serviceId: "service_wabre9b",
-      templateId: "template_sp4ythw",
-      publicKey: "JKWvE6lLACENhmYIi",
-      senderName: "Briddick",
-      senderEmail: "tqmhosain@gmail.com",
-      recipientEmails: finalFormData?.email,
-      details: {
-        firstName: finalFormData?.firstName,
-        lastName: finalFormData?.lastName,
-        addressToSell: finalFormData?.addressToSell || "No address provided",
-        lookingToSell: finalFormData?.lookingToSell ? "Yes" : "No",
-        hasAgent: finalFormData?.hasAgent ? "Yes" : "No",
-        phoneNumber: finalFormData?.phoneNumber,
-        priceRange: finalFormData?.priceRange,
-        additionalDetails: finalFormData?.additionalDetails,
-        replyTo: finalFormData?.email,
-      },
-    });
+      const response = await fetch('http://192.168.40.47:3002/email/buy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(finalFormData)
+      });
 
-    console.log("Email details sent:", {  // Log email details
-      firstName: finalFormData?.firstName,
-      lastName: finalFormData?.lastName,
-      addressToSell: finalFormData?.addressToSell || "No address provided",
-      lookingToSell: finalFormData?.lookingToSell ? "Yes" : "No",
-      hasAgent: finalFormData?.hasAgent ? "Yes" : "No",
-      phoneNumber: finalFormData?.phoneNumber,
-      priceRange: finalFormData?.priceRange,
-      additionalDetails: finalFormData?.additionalDetails,
-      replyTo: finalFormData?.email,
-    });
+      const responseData = await response.json();
+      console.log("API Response:", responseData);
 
-    toast.success("OTP Verified Successfully!");
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to submit form');
+      }
+
+      toast.success("Form submitted successfully!");
+      setCurrentStep(steps.length - 1);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error("Failed to submit form. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpInput = (e, index) => {
@@ -252,25 +252,60 @@ const BuyMultipleFormWithMudal = () => {
   const validatePhoneNumber = async() => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
+    
+    // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
+    const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
+    const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
+    
+    const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ''); // Remove any spaces, dashes or dots
 
-    const phonePattern = /^(\+1|1)?[-.●]?(\d{3})[-.●]?(\d{3})[-.●]?(\d{4})$/;
-    if (!formData.phoneNumber.trim()) {
+    if (!phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
-    } else if (!phonePattern.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid USA phone number";
+    } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
+      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
       isValid = false;
     }
 
     if(isValid){
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("zi5jd", otp);
-      const res = await sendOtpMessage(formData.phoneNumber, otp);
-      console.log(res);
+      try {
+        // Format phone number with country code based on length
+        let formattedPhone;
+        if (phoneNumber.length === 10) {
+          // USA number
+          formattedPhone = `+1${phoneNumber}`;
+        } else if (phoneNumber.length === 11) {
+          // Bangladesh number (replace first '0' with '+880')
+          formattedPhone = `+88${phoneNumber}`;
+        }
+
+        const response = await fetch('http://192.168.40.47:3002/otp/send-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phoneNumber: formattedPhone
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          localStorage.setItem("zi5jd", data.otp);
+          toast.success(data.message);
+        } else {
+          toast.error("Failed to send OTP");
+          isValid = false;
+        }
+      } catch (error) {
+        console.error('Error sending OTP:', error);
+        toast.error("Failed to send OTP. Please try again.");
+        isValid = false;
+      }
     }
 
-
-    setErrors(newErrors); // Set error messages to state
+    setErrors(newErrors);
     return isValid;
   };
 
