@@ -128,10 +128,6 @@ const SellMultipleFormWithModul = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
-
     const otp = localStorage.getItem("zi5jd");
     if (otpValues !== otp) {
       toast.error("OTP is incorrect");
@@ -139,37 +135,42 @@ const SellMultipleFormWithModul = () => {
       return;
     }
 
-    const finalFormData = {
-      ...formData,
-      otp: otpValues,
-    };
-    console.log(finalFormData);
+    try {
+      // Format the data according to your needs
+      const finalFormData = {
+        additionalDetails: formData.additionalDetails,
+        addressToSell: formData.addressToSell,
+        email: formData.email,
+        firstName: formData.firstName,
+        hasAgent: formData.hasAgent,
+        lastName: formData.lastName,
+        lookingToSell: formData.lookingToSell,
+        otp: otpValues,
+        phoneNumber: formData.phoneNumber,
+        priceRange: formatPriceRange(formData.priceRange[0])
+      };
 
-    await sendEmail({
-      serviceId: "service_wabre9b",
-      templateId: "template_sp4ythw",
-      publicKey: "JKWvE6lLACENhmYIi",
-      senderName: "Briddick",
-      senderEmail: "tqmhosain@gmail.com",
-      recipientEmails: finalFormData?.email,
-      details: {
-        firstName: finalFormData?.firstName,
-        lastName: finalFormData?.lastName,
-        lookingToSell: finalFormData?.lookingToSell ? "Yes" : "No",
-        hasAgent: finalFormData?.hasAgent ? "Yes" : "No",
-        phoneNumber: finalFormData?.phoneNumber,
-        priceRange: finalFormData?.priceRange,
-        additionalDetails: finalFormData.additionalDetails,
-        replyTo: finalFormData?.email,
-        addressToSell: finalFormData.addressToSell,
-      },
-    });
-    console.log("Email sent successfully!");
+      // Save data to your API
+      const response = await fetch('http://192.168.40.47:3002/email/sell', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(finalFormData)
+      });
 
-    toast.success("OTP Verified Successfully!");
-    setCurrentStep(steps.length - 1);
+      if (!response.ok) {
+        throw new Error('Failed to save data');
+      }
 
-    console.log("Final form data:", finalFormData);
+      toast.success("Form submitted successfully!");
+      setCurrentStep(steps.length - 1);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to submit form. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpInput = (e, index) => {
@@ -240,29 +241,65 @@ const SellMultipleFormWithModul = () => {
     }
   };
 
-  const validatePhoneNumber = async () => {
+  const validatePhoneNumber = async() => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
+    
+    // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
+    const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
+    const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
+    
+    const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ''); // Remove any spaces, dashes or dots
 
-    const phonePattern = /^(\+1|1)?[-.●]?(\d{3})[-.●]?(\d{3})[-.●]?(\d{4})$/;
-    if (!formData.phoneNumber.trim()) {
+    if (!phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
-    } else if (!phonePattern.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid USA phone number";
+    } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
+      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
       isValid = false;
     }
 
-    if (isValid) {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("zi5jd", otp);
-      const res = await sendOtpMessage(formData.phoneNumber, otp);
-      console.log(res);
+    if(isValid){
+      try {
+        // Format phone number with country code based on length
+        let formattedPhone;
+        if (phoneNumber.length === 10) {
+          // USA number
+          formattedPhone = `+1${phoneNumber}`;
+        } else if (phoneNumber.length === 11) {
+          // Bangladesh number (replace first '0' with '+880')
+          formattedPhone = `+88${phoneNumber}`;
+        }
+
+        const response = await fetch('http://192.168.40.47:3002/otp/send-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phoneNumber: formattedPhone
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          localStorage.setItem("zi5jd", data.otp);
+          toast.success(data.message);
+        } else {
+          toast.error("Failed to send OTP");
+          isValid = false;
+        }
+      } catch (error) {
+        console.error('Error sending OTP:', error);
+        toast.error("Failed to send OTP. Please try again.");
+        isValid = false;
+      }
     }
-    setErrors(newErrors); // Set error messages to state
+
+    setErrors(newErrors);
     return isValid;
   };
-
   const handlePhoneVerificationNext = () => {
     if (validatePhoneNumber()) {
       handleNext(); // Proceed to next step if phone number is valid
