@@ -17,7 +17,9 @@ const Banner = () => {
           <p className="text-white text-[18px] font-normal leading-[160%] mb-8">We analyze hundreds of local agents and find the best to compete in your area.</p>
 
           {/* form  */}
-          <TabsComponent />
+          <div className="w-full max-w-[958px]">
+            <TabsComponent />
+          </div>
         </div>
       </div>
     </>

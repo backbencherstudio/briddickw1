@@ -1087,7 +1087,7 @@ const SellAndBuyMultipleFormWithModul = () => {
   return (
     <div className="bg-white flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">
       {currentStep === 0 ? (
-        <div className="max-w-[1087px] rounded-b-xl bg-white rounded-2xl">
+        <div className="w-full rounded-b-xl bg-white rounded-2xl">
           {steps[0].content}
         </div>
       ) : (

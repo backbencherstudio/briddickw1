@@ -130,9 +130,9 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
   };
 
   return (
-    <div className="w-full md:w-[700px] lg:w-[987px] flex flex-col items-center lg:rounded-2xl rounded-tl-none">
-      <div className="relative py-1 w-full">
-        <div className="w-[300px] md:w-[700px] lg:w-[987px] p-4 lg:flex items-center gap-4 lg:rounded-2xl">
+    <div className="w-full flex flex-col items-center lg:rounded-2xl rounded-tl-none ">
+      <div className="relative py-1 w-full ">
+        <div className="w-full p-4 lg:flex items-center gap-4 lg:rounded-2xl">
           <Input
             className={`w-full py-7 placeholder:text-sm md:placeholder:text-lg lg:placeholder:text-xl flex-grow border-none outline-none ${
               error ? "border-red-500" : ""
@@ -147,7 +147,7 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
           />
           {showCompareButton && (
             <Button
-              className="w-full lg:w-40 my-2 flex items-center gap-1 md:px-4 md:py-3"
+              className="w-full lg:w-40 my-2 flex items-center gap-1 md:px-4 md:py-3 "
               variant="primary"
               onClick={handleSubmit}
             >
