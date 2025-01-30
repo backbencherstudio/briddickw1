@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import TopArrowIcon from "../../public/icons/TopArrow";
 
-export const LocationStep = ({className, updateFormData, handleNext, placeholderTitle, showCompareButton = true }) => {
+export const LocationStep = ({updateFormData, handleNext, placeholderTitle, showCompareButton = true }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -13,6 +13,9 @@ export const LocationStep = ({className, updateFormData, handleNext, placeholder
   const [error, setError] = useState("");
 
   const resultRefs = useRef([]);
+
+  // Add debounce timer ref
+  const debounceTimer = useRef(null);
 
   const searchLocation = async (query) => {
     if (!query) {
@@ -34,6 +37,17 @@ export const LocationStep = ({className, updateFormData, handleNext, placeholder
       toast.error("Error searching locations. Please try again.");
     }
     setIsSearching(false);
+  };
+
+  // Add debounced search function
+  const debouncedSearch = (query) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    debounceTimer.current = setTimeout(() => {
+      searchLocation(query);
+    }, 400); // 300ms delay
   };
 
   const handleLocationSelect = (location) => {
@@ -116,9 +130,9 @@ export const LocationStep = ({className, updateFormData, handleNext, placeholder
   };
 
   return (
-    <div className="md:w-[700px] lg:w-[987px] flex flex-col items-center lg:rounded-2xl rounded-tl-none">
-      <div className="relative px-4 py-1 w-full">
-        <div className="p-4 lg:flex items-center gap-4 lg:rounded-2xl">
+    <div className="w-full md:w-[700px] lg:w-[987px] flex flex-col items-center lg:rounded-2xl rounded-tl-none">
+      <div className="relative py-1 w-full">
+        <div className="w-[300px] md:w-[700px] lg:w-[987px] p-4 lg:flex items-center gap-4 lg:rounded-2xl">
           <Input
             className={`w-full py-7 placeholder:text-sm md:placeholder:text-lg lg:placeholder:text-xl flex-grow border-none outline-none ${
               error ? "border-red-500" : ""
@@ -127,7 +141,7 @@ export const LocationStep = ({className, updateFormData, handleNext, placeholder
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value);
-              searchLocation(e.target.value);
+              debouncedSearch(e.target.value);
               setError("");
             }}
           />

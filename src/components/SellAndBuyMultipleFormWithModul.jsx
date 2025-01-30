@@ -55,21 +55,27 @@ const getPricePoints = () => {
   // Under 100K
   points.push({ value: 50, display: "Under $100K" });
 
-  // $100K to $950K in 50K increments
-  for (let i = 100; i < 1000; i += 50) {
+  // $100K to $900K in 50K increments
+  for (let i = 100; i < 950; i += 50) {
     points.push({
       value: i,
       display: `$${i}K - $${i + 50}K`,
     });
   }
 
+  // Special case for 950K to 1M
+  points.push({
+    value: 950,
+    display: "$950K - $1M",
+  });
+
   // $1M to $2.25M in 250K increments
   for (let i = 1000; i < 2750; i += 250) {
     points.push({
       value: i,
-      display: `$${(i / 1000).toFixed(2)}M - $${((i + 250) / 1000).toFixed(
-        2
-      )}M`,
+      display: i === 1000 
+        ? `$1M - $${((i + 250) / 1000).toFixed(2)}M`
+        : `$${(i / 1000).toFixed(2)}M - $${((i + 250) / 1000).toFixed(2)}M`,
     });
   }
 
@@ -81,6 +87,7 @@ const getPricePoints = () => {
 
   return points;
 };
+
 
 const SellAndBuyMultipleFormWithModul = () => {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
@@ -264,33 +271,34 @@ const SellAndBuyMultipleFormWithModul = () => {
     }
   };
 
-  // Validation function
-  const validateContactDetails = () => {
-    let isValid = true;
-    const newErrors = { ...INITIAL_ERRORS };
+ // Validation function
+ const validateContactDetails = () => {
+  let isValid = true;
+  const newErrors = { ...INITIAL_ERRORS };
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
+  if (!formData.firstName.trim()) {
+    newErrors.firstName = "First name is required";
+    isValid = false;
+  }
+  if (!formData.lastName.trim()) {
+    newErrors.lastName = "Last name is required";
+    isValid = false;
+  }
+  if (!formData.email.trim()) {
+    newErrors.email = "Email is required";
+    isValid = false;
+  } else {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
       isValid = false;
     }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-      isValid = false;
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(formData.email)) {
-        newErrors.email = "Please enter a valid email address";
-        isValid = false;
-      }
-    }
+  }
 
-    setErrors(newErrors); // Set error messages to state
-    return isValid;
-  };
+  setErrors(newErrors); // Set error messages to state
+  return isValid;
+};
+
 
   const handleContactNext = () => {
     if (validateContactDetails()) {
@@ -298,7 +306,7 @@ const SellAndBuyMultipleFormWithModul = () => {
     }
   };
 
-  const validatePhoneNumber = async() => {
+  const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
     
@@ -312,12 +320,14 @@ const SellAndBuyMultipleFormWithModul = () => {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
     } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
+      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA)";
       isValid = false;
     }
 
-    if(isValid){
+    if (isValid) {
       try {
+        setIsLoading(true); // Add loading state while API call is in progress
+
         // Format phone number with country code based on length
         let formattedPhone;
         if (phoneNumber.length === 10) {
@@ -328,14 +338,14 @@ const SellAndBuyMultipleFormWithModul = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch('http://192.168.40.47:3002/otp/send-otp', {
-          method: 'POST',
+        const response = await fetch("http://192.168.40.47:3002/otp/send-otp", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            phoneNumber: formattedPhone
-          })
+            phoneNumber: formattedPhone,
+          }),
         });
 
         const data = await response.json();
@@ -343,14 +353,17 @@ const SellAndBuyMultipleFormWithModul = () => {
         if (data.success) {
           localStorage.setItem("zi5jd", data.otp);
           toast.success(data.message);
+          return true; // Return true to indicate successful validation
         } else {
           toast.error("Failed to send OTP");
           isValid = false;
         }
       } catch (error) {
-        console.error('Error sending OTP:', error);
+        console.error("Error sending OTP:", error);
         toast.error("Failed to send OTP. Please try again.");
         isValid = false;
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -358,9 +371,10 @@ const SellAndBuyMultipleFormWithModul = () => {
     return isValid;
   };
 
-  const handlePhoneVerificationNext = () => {
-    if (validatePhoneNumber()) {
-      handleNext(); // Proceed to next step if phone number is valid
+  const handlePhoneVerificationNext = async () => {
+    const isValid = await validatePhoneNumber();
+    if (isValid) {
+      handleNext(); // Only proceed to next step if validation succeeds
     }
   };
 
@@ -423,7 +437,7 @@ const SellAndBuyMultipleFormWithModul = () => {
           formData={formData}
           updateFormData={updateFormData}
           handleNext={handleNext}
-          placeholderTitle="Enter the address you are sell and buy"
+          placeholderTitle="Enter the city you are sell and buy"
         />
       ),
     },
@@ -433,7 +447,7 @@ const SellAndBuyMultipleFormWithModul = () => {
         <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
             <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
-              Roughly, what is your home worth?
+            Roughly, what is your home worth?
             </h2>
           </div>
 
@@ -473,7 +487,7 @@ const SellAndBuyMultipleFormWithModul = () => {
               }}
               className="bg-[#E9EAF3] my-6 text-center mx-auto"
             />
-            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
+            <div className="flex justify-between px-10 mt-2 text-lg md:text-2xl">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
@@ -503,21 +517,22 @@ const SellAndBuyMultipleFormWithModul = () => {
     {
       content: (
         <div className="w-full h-full l md:h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px] px-5">
               Where are you looking to buy?
             </h2>
 
             <div className="gap-4 py-4">
-              <div className="w-full">
-              <LocationStep
-              formData={formData}
-              updateFormData={(field, value) => updateFormData("cityToBuy", value)}
-              handleNext={handleNext}
-              placeholderTitle="Enter the address where you want to buy"
-              showCompareButton={false}  // Changed from hideCompareAgents to showCompareButton
-              className='w-full bg-red-600'
-            />
+              <div className="">
+                <LocationStep
+                  formData={formData}
+                  updateFormData={(field, value) => updateFormData("cityToBuy", value)}
+                  handleNext={handleNext}
+                  placeholderTitle="Enter the city where you want to buy"
+                  showCompareButton={false}
+                  className='w-full bg-red-600'
+                />
+                {error && <p className="text-red-500 text-sm mt-1 px-5">{error}</p>}
               </div>
             </div>
           </div>
@@ -535,7 +550,14 @@ const SellAndBuyMultipleFormWithModul = () => {
             <Button
               className="flex items-center gap-1 bg-[#23298B] text-white shadow-sm hover:text-[#23298B] transition-all duration-300 ease-in-out"
               variant="primary"
-              onClick={handleNext}
+              onClick={() => {
+                if (!formData.cityToBuy) {
+                  setError("Please enter a city where you want to buy");
+                  return;
+                }
+                setError("");
+                handleNext();
+              }}
             >
               Next
               <RightArrowIcon className="w-6 h-6" />
@@ -593,7 +615,7 @@ const SellAndBuyMultipleFormWithModul = () => {
               }}
               className="bg-[#E9EAF3] my-6 text-center mx-auto"
             />
-            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
+            <div className="flex justify-between px-10 mt-2 text-lg md:text-2xl">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
@@ -629,8 +651,8 @@ const SellAndBuyMultipleFormWithModul = () => {
           className="w-full h-full l
       md:h-[80vh] mx-auto flex flex-col px-3 select-none"
         >
-          <div className="mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Have you already hired a real estate agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -683,19 +705,19 @@ const SellAndBuyMultipleFormWithModul = () => {
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
-          <div className="mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are there any other details you'd like to share?
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-xl md:text-[32px] mb-5">
+              Are there any other details you&apos;d like to share?
             </h2>
-          </div>
           <textarea
-            className="w-full h-32 p-2 border rounded-md placeholder:text-lg bg-[#F8FAFB]"
+            className="w-full h-32 p-2 border rounded-md md:placeholder:text-lg bg-[#F8FAFB]"
             placeholder="Enter any details about your real estate needs..."
             value={formData.additionalDetails}
             onChange={(e) =>
               updateFormData("additionalDetails", e.target.value)
             }
           />
+          </div>
           {/* Footer Section for Buttons */}
           <div className="flex justify-between px-20 py-8 mt-auto">
             <Button
@@ -721,9 +743,9 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 6: Contact Details
     {
       content: (
-        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
+        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 md:px-10 select-none py-5">
           <div className=" mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+            <h2 className="md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
           </div>
@@ -808,16 +830,16 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 7: Phone Verification
     {
       content: (
-        <div className="md:w-[815px] h-[80vh] mx-auto flex  flex-col px-3 select-none">
+        <div className="md:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
-            <h2 className="text-[#0F113A] text-xl md:text-3xl font-semibold">
-              We're preparing to connect you to at least 3 agents. Please verify
+            <h2 className="text-[#0F113A] text-xl lg:text-3xl font-semibold">
+              We&apos;re preparing to connect you to at least 3 agents. Please verify
               the following information to get connected sooner:
             </h2>
           </div>
-          <div className="md:w-1/2 flex space-x-3 mt-7 mb-16 md:mb-20">
+          <div className="md:w-1/2 flex space-x-3 mt-7 mb-16 md:mb-20 px-4">
             <div className="w-24">
-              <select className="w-full border rounded-md p-2 py-3 bg-[#ECEFF3]">
+              <select className="w-full border rounded-md p-2 py-3 bg-[#ECEFF3] text-sm md:text-base">
                 <option>USA</option>
               </select>
             </div>
@@ -837,7 +859,7 @@ const SellAndBuyMultipleFormWithModul = () => {
             </div>
           </div>
 
-          <div className="flex justify-between md:mx-20 my-10">
+          <div className="flex justify-between px-4 md:px-0 md:mx-20 mb-5 md:my-10">
             <Button
               className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
@@ -849,12 +871,13 @@ const SellAndBuyMultipleFormWithModul = () => {
             <Button
               className="flex items-center gap-1 text-[#23298B]"
               variant="secondary"
-              onClick={handlePhoneVerificationNext} // Call validation handler
+              onClick={handlePhoneVerificationNext}
+              disabled={isLoading}
             >
               Text Confirmation Code
             </Button>
           </div>
-          <p className="text-gray-500 text-sm md:text-lg  md:mt-0">
+          <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
             By clicking "Text Confirmation Code", I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
@@ -899,7 +922,7 @@ const SellAndBuyMultipleFormWithModul = () => {
                       key={index}
                       type="text"
                       maxLength="1"
-                      className="w-12 h-14 text-center border border-gray-300 rounded-md text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#F8FAFB]"
+                      className="w-10 md:w-12 h-14 text-center border border-gray-300 rounded-md text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#ECEFF3]"
                       onChange={(e) => handleOtpInput(e, index)}
                       ref={(el) => (inputRefs.current[index] = el)}
                     />
@@ -930,7 +953,7 @@ const SellAndBuyMultipleFormWithModul = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn't receive a code?{" "}
+              Didn&apos;t receive a code?{" "}
               <span
                 className="text-indigo-600 font-semibold cursor-pointer hover:underline"
                 onClick={handleBack}
@@ -951,7 +974,7 @@ const SellAndBuyMultipleFormWithModul = () => {
     // Step 8: Thank you
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 md:px-10">
+        <div className="lg:w-[815px] md:min-h-[80vh] py-5 mx-auto flex flex-col px-4 md:px-10">
           <div className=" mb-4 mt-10">
             <div>
               <img
@@ -1005,7 +1028,7 @@ const SellAndBuyMultipleFormWithModul = () => {
               </li>
             </ul>
 
-            <p className="text-gray-700 mt-8 text-center text-lg px-2">
+            <p className="text-gray-700 mt-8 text-center text-sm md:text-lg px-2">
               If you need anything in the meantime, don&apos;t hesitate to reach
               out to{" "}
               <a
@@ -1062,7 +1085,7 @@ const SellAndBuyMultipleFormWithModul = () => {
   }, [currentStep, formData]); // Add dependencies that are used in handleKeyPress
 
   return (
-    <div className="bg-gray-100 flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">
+    <div className="bg-white flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">
       {currentStep === 0 ? (
         <div className="max-w-[1087px] rounded-b-xl bg-white rounded-2xl">
           {steps[0].content}

@@ -11,8 +11,6 @@ import MinusIcon from "../../public/icons/MinusIcon";
 import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
-import sendOtpMessage from "../lib/sendMessage";
-import { sendEmail } from "../lib/sendEmail";
 // import { sendEmail } from "../lib/sendEmail";
 
 // Progress bar component
@@ -57,21 +55,27 @@ const getPricePoints = () => {
   // Under 100K
   points.push({ value: 50, display: "Under $100K" });
 
-  // $100K to $950K in 50K increments
-  for (let i = 100; i < 1000; i += 50) {
+  // $100K to $900K in 50K increments
+  for (let i = 100; i < 950; i += 50) {
     points.push({
       value: i,
       display: `$${i}K - $${i + 50}K`,
     });
   }
 
+  // Special case for 950K to 1M
+  points.push({
+    value: 950,
+    display: "$950K - $1M",
+  });
+
   // $1M to $2.25M in 250K increments
   for (let i = 1000; i < 2750; i += 250) {
     points.push({
       value: i,
-      display: `$${(i / 1000).toFixed(2)}M - $${((i + 250) / 1000).toFixed(
-        2
-      )}M`,
+      display: i === 1000 
+        ? `$1M - $${((i + 250) / 1000).toFixed(2)}M`
+        : `$${(i / 1000).toFixed(2)}M - $${((i + 250) / 1000).toFixed(2)}M`,
     });
   }
 
@@ -241,7 +245,14 @@ const SellMultipleFormWithModul = () => {
     }
   };
 
-  const validatePhoneNumber = async() => {
+  const handlePhoneVerificationNext = async () => {
+    const isValid = await validatePhoneNumber();
+    if (isValid) {
+      handleNext(); // Only proceed to next step if validation succeeds
+    }
+  };
+
+  const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
     
@@ -255,12 +266,14 @@ const SellMultipleFormWithModul = () => {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
     } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
+      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA)";
       isValid = false;
     }
 
-    if(isValid){
+    if (isValid) {
       try {
+        setIsLoading(true); // Add loading state while API call is in progress
+        
         // Format phone number with country code based on length
         let formattedPhone;
         if (phoneNumber.length === 10) {
@@ -286,6 +299,7 @@ const SellMultipleFormWithModul = () => {
         if (data.success) {
           localStorage.setItem("zi5jd", data.otp);
           toast.success(data.message);
+          return true; // Return true to indicate successful validation
         } else {
           toast.error("Failed to send OTP");
           isValid = false;
@@ -294,16 +308,13 @@ const SellMultipleFormWithModul = () => {
         console.error('Error sending OTP:', error);
         toast.error("Failed to send OTP. Please try again.");
         isValid = false;
+      } finally {
+        setIsLoading(false);
       }
     }
 
     setErrors(newErrors);
     return isValid;
-  };
-  const handlePhoneVerificationNext = () => {
-    if (validatePhoneNumber()) {
-      handleNext(); // Proceed to next step if phone number is valid
-    }
   };
 
   // Handle modal close with page reload
@@ -395,7 +406,7 @@ const SellMultipleFormWithModul = () => {
                 className="bg-[#E9EAF3] my-6 text-center mx-auto"
               />
             </div>
-            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
+            <div className="flex justify-between px-10 mt-2 md:text-2xl text-lg">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
@@ -428,8 +439,8 @@ const SellMultipleFormWithModul = () => {
           className="w-full h-full l
       md:h-[80vh] mx-auto flex flex-col px-3 select-none"
         >
-          <div className="mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Have you already hired a real estate agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
@@ -479,77 +490,77 @@ const SellMultipleFormWithModul = () => {
     },
 
     // Step 4: Selling Question
-    {
-      content: (
-        <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
-          <div className="mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are you also looking to sell a home?
-            </h2>
-            <div className="flex-grow flex mt-10 items-center">
-              <div className="flex space-x-4">
-                <Button
-                  variant={
-                    formData.lookingToSell === true ? "primary" : "secondary"
-                  }
-                  onClick={() => updateFormData("lookingToSell", true)}
-                >
-                  Yes
-                </Button>
-                <Button
-                  variant={
-                    formData.lookingToSell === false ? "primary" : "secondary"
-                  }
-                  onClick={() => updateFormData("lookingToSell", false)}
-                >
-                  No
-                </Button>
-              </div>
-            </div>
-          </div>
-          {/* Footer Section for Buttons */}
-          <div className="flex justify-between px-20 py-8 mt-auto">
-            <Button
-              className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
-              variant="secondary"
-              onClick={handleBack}
-            >
-              Back
-            </Button>
-            <Button
-              className={`flex items-center gap-1 ${
-                formData.lookingToSell !== null
-                  ? "bg-[#23298B] text-white"
-                  : "bg-gray-400 text-white cursor-not-allowed"
-              } shadow-sm hover:text-[#23298B] transition-all duration-300 ease-in-out`}
-              variant="primary"
-              onClick={handleNext}
-              disabled={formData.lookingToSell === null}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      ),
-    },
+    // {
+    //   content: (
+    //     <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
+    //       <div className="md:px-10 px-4 mb-4 mt-24">
+    //         <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+    //           Are you also looking to sell a home?
+    //         </h2>
+    //         <div className="flex-grow flex mt-10 items-center">
+    //           <div className="flex space-x-4">
+    //             <Button
+    //               variant={
+    //                 formData.lookingToSell === true ? "primary" : "secondary"
+    //               }
+    //               onClick={() => updateFormData("lookingToSell", true)}
+    //             >
+    //               Yes
+    //             </Button>
+    //             <Button
+    //               variant={
+    //                 formData.lookingToSell === false ? "primary" : "secondary"
+    //               }
+    //               onClick={() => updateFormData("lookingToSell", false)}
+    //             >
+    //               No
+    //             </Button>
+    //           </div>
+    //         </div>
+    //       </div>
+    //       {/* Footer Section for Buttons */}
+    //       <div className="flex justify-between px-20 py-8 mt-auto">
+    //         <Button
+    //           className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
+    //           variant="secondary"
+    //           onClick={handleBack}
+    //         >
+    //           Back
+    //         </Button>
+    //         <Button
+    //           className={`flex items-center gap-1 ${
+    //             formData.lookingToSell !== null
+    //               ? "bg-[#23298B] text-white"
+    //               : "bg-gray-400 text-white cursor-not-allowed"
+    //           } shadow-sm hover:text-[#23298B] transition-all duration-300 ease-in-out`}
+    //           variant="primary"
+    //           onClick={handleNext}
+    //           disabled={formData.lookingToSell === null}
+    //         >
+    //           Next
+    //         </Button>
+    //       </div>
+    //     </div>
+    //   ),
+    // },
 
     // Step 5: Additional Details
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
-          <div className=" mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are there any other details you'd like to share?
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className=" pb-4 font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+              Are there any other details you&apos;d like to share?
             </h2>
-          </div>
           <textarea
-            className="w-full h-32 p-2 border rounded-md placeholder:text-lg bg-[#ECEFF3]"
+            className=" w-full h-32 p-2 border rounded-md placeholder:text-lg bg-[#ECEFF3]"
             placeholder="Enter any details about your real estate needs..."
             value={formData.additionalDetails}
             onChange={(e) =>
               updateFormData("additionalDetails", e.target.value)
             }
           />
+          </div>
           {/* Footer Section for Buttons */}
           <div className="flex justify-between px-20 py-8 mt-auto">
             <Button
@@ -662,16 +673,16 @@ const SellMultipleFormWithModul = () => {
     // Step 7: Phone Verification
     {
       content: (
-        <div className="md:w-[815px] py-5 mx-auto flex  flex-col px-3 select-none">
-          <div className="mb-4 mt-5 md:mt-16">
-            <h2 className="text-[#0F113A] text-xl md:text-3xl font-semibold">
-              We're preparing to connect you to at least 3 agents. Please verify
-              the following information to get connected sooner:
+        <div className="md:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
+          <div className="mb-4 mt-5 md:mt-24">
+            <h2 className="text-[#0F113A] text-xl md:text-3xl md:font-semibold">
+                We&apos;re preparing to connect you to at least 3 agents. Please verify
+                the following information to get connected sooner:
             </h2>
           </div>
-          <div className="md:w-1/2 flex space-x-3 mt-7 mb-16 md:mb-20">
+          <div className="md:w-1/2 flex space-x-3 mt-7 mb-16 md:mb-20 px-4">
             <div className="w-24">
-              <select className="w-full border rounded-md p-2 py-3 bg-[#ECEFF3]">
+              <select className="border rounded-md p-2 py-3 bg-[#ECEFF3] text-sm md:text-base">
                 <option>USA</option>
               </select>
             </div>
@@ -691,7 +702,7 @@ const SellMultipleFormWithModul = () => {
             </div>
           </div>
 
-          <div className="flex justify-between md:mx-20 my-10">
+          <div className="flex justify-between px-4 md:px-0 md:mx-20 mb-5 md:my-10">
             <Button
               className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
@@ -703,9 +714,17 @@ const SellMultipleFormWithModul = () => {
             <Button
               className="flex items-center gap-1 text-[#23298B]"
               variant="secondary"
-              onClick={handlePhoneVerificationNext} // Call validation handler
+              onClick={handlePhoneVerificationNext}
+              disabled={isLoading}
             >
-              Text Confirmation Code
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+                  <span>Sending...</span>
+                </div>
+              ) : (
+                "Text Confirmation Code"
+              )}
             </Button>
           </div>
           <p className="text-gray-500 text-sm md:text-lg  md:mt-0">
@@ -735,7 +754,7 @@ const SellMultipleFormWithModul = () => {
               />
             </div>
 
-            <div className="w-full mx-auto text-center">
+            <div className=" w-full mx-auto text-center">
               <div className="mb-4">
                 <h2 className="text-[#0F113A] text-3xl font-semibold leading-10 my-6">
                   Welcome Back!
@@ -753,7 +772,7 @@ const SellMultipleFormWithModul = () => {
                       key={index}
                       type="text"
                       maxLength="1"
-                      className="w-12 h-14 text-center border border-gray-300 rounded-md text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#ECEFF3]"
+                      className="w-10 md:w-12 h-14 text-center border border-gray-300 rounded-md text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#ECEFF3]"
                       onChange={(e) => handleOtpInput(e, index)}
                       ref={(el) => (inputRefs.current[index] = el)}
                     />
@@ -784,7 +803,7 @@ const SellMultipleFormWithModul = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn't receive a code?{" "}
+              Didn&apos;t receive a code?{" "}
               <span
                 className="text-indigo-600 font-semibold cursor-pointer hover:underline"
                 onClick={handleBack}
@@ -805,7 +824,7 @@ const SellMultipleFormWithModul = () => {
     // Step 8: Thank you
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 md:px-10">
+        <div className="lg:w-[815px] md:min-h-[80vh] py-5 mx-auto flex flex-col px-4 md:px-10">
           <div className=" mb-4 mt-10">
             <div>
               <img
@@ -859,7 +878,7 @@ const SellMultipleFormWithModul = () => {
               </li>
             </ul>
 
-            <p className="text-gray-700 mt-8 text-center md:text-lg px-2">
+            <p className="text-gray-700 mt-8 text-center text-sm md:text-lg px-2">
               If you need anything in the meantime, don&apos;t hesitate to reach
               out to{" "}
               <a
@@ -943,7 +962,7 @@ const SellMultipleFormWithModul = () => {
   }, [currentStep, formData]); // Add dependencies that the handler uses
 
   return (
-    <div className="bg-gray-100 flex flex-col items-center justify-center rounded-2xl">
+    <div className="bg-white flex flex-col items-center justify-center rounded-b-2xl md:rounded-tr-2xl">
       {currentStep === 0 ? (
         <div className="max-w-[1087px]  rounded-b-xl bg-white md:rounded-tr-2xl">
           {steps[0].content}

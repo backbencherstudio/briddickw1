@@ -11,8 +11,6 @@ import MinusIcon from "../../public/icons/MinusIcon";
 import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
-import { sendEmail } from "../lib/sendEmail";
-import sendOtpMessage from "../lib/sendMessage";
 
 // Progress bar component
 const ProgressBar = ({ currentStep, totalSteps }) => {
@@ -31,13 +29,13 @@ const ProgressBar = ({ currentStep, totalSteps }) => {
 const INITIAL_FORM_DATA = {
   addressToSell: "",
   priceRange: [500],
-  hasAgent: false,
-  lookingToSell: false,
+  hasAgent: null,
+  lookingToSell: null,
   additionalDetails: "",
   firstName: "",
   lastName: "",
   email: "",
-  phoneNumber: ""
+  phoneNumber: "",
 };
 
 const INITIAL_ERRORS = {
@@ -54,21 +52,28 @@ const getPricePoints = () => {
   // Under 100K
   points.push({ value: 50, display: "Under $100K" });
 
-  // $100K to $950K in 50K increments
-  for (let i = 100; i < 1000; i += 50) {
+  // $100K to $900K in 50K increments
+  for (let i = 100; i < 950; i += 50) {
     points.push({
       value: i,
       display: `$${i}K - $${i + 50}K`,
     });
   }
 
+  // Special case for 950K to 1M
+  points.push({
+    value: 950,
+    display: "$950K - $1M",
+  });
+
   // $1M to $2.25M in 250K increments
   for (let i = 1000; i < 2750; i += 250) {
     points.push({
       value: i,
-      display: `$${(i / 1000).toFixed(2)}M - $${((i + 250) / 1000).toFixed(
-        2
-      )}M`,
+      display:
+        i === 1000
+          ? `$1M - $${((i + 250) / 1000).toFixed(2)}M`
+          : `$${(i / 1000).toFixed(2)}M - $${((i + 250) / 1000).toFixed(2)}M`,
     });
   }
 
@@ -115,9 +120,9 @@ const BuyMultipleFormWithMudal = () => {
     }
   };
 
-  const handleSubmit = async () => { 
+  const handleSubmit = async () => {
     const otpValues = inputRefs.current.map((input) => input.value).join("");
-   
+
     if (otpValues.length < 6) {
       toast.error("Please enter a valid 6-digit OTP.");
       return;
@@ -136,44 +141,45 @@ const BuyMultipleFormWithMudal = () => {
     const finalFormData = {
       additionalDetails: formData.additionalDetails || "",
       // Handle both cases where addressToSell is an object or string
-      addressToSell: typeof formData.addressToSell === 'object' 
-        ? formData.addressToSell.description 
-        : formData.addressToSell || "",
+      addressToSell:
+        typeof formData.addressToSell === "object"
+          ? formData.addressToSell.description
+          : formData.addressToSell || "",
       email: formData.email || "",
       firstName: formData.firstName || "",
       hasAgent: formData.hasAgent === true, // Convert to boolean
       lastName: formData.lastName || "",
       lookingToSell: formData.lookingToSell === true, // Convert to boolean
       otp: otpValues,
-      phoneNumber: formData.phoneNumber?.startsWith('+') 
-        ? formData.phoneNumber 
+      phoneNumber: formData.phoneNumber?.startsWith("+")
+        ? formData.phoneNumber
         : `+${formData.phoneNumber}` || "",
-      priceRange: formatPriceRange(formData.priceRange[0]) || ""
+      priceRange: formatPriceRange(formData.priceRange[0]) || "",
     };
 
     try {
       // Log the data being sent for debugging
       console.log("Sending data to API:", finalFormData);
 
-      const response = await fetch('http://192.168.40.47:3002/email/buy', {
-        method: 'POST',
+      const response = await fetch("http://192.168.40.47:3002/email/buy", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(finalFormData)
+        body: JSON.stringify(finalFormData),
       });
 
       const responseData = await response.json();
       console.log("API Response:", responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to submit form');
+        throw new Error(responseData.error || "Failed to submit form");
       }
 
       toast.success("Form submitted successfully!");
       setCurrentStep(steps.length - 1);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
       toast.error("Failed to submit form. Please try again.");
     } finally {
       setIsLoading(false);
@@ -248,27 +254,36 @@ const BuyMultipleFormWithMudal = () => {
     }
   };
 
+  const handlePhoneVerificationNext = async () => {
+    const isValid = await validatePhoneNumber();
+    if (isValid) {
+      handleNext(); // Only proceed to next step if validation succeeds
+    }
+  };
   // Phone number validation function
-  const validatePhoneNumber = async() => {
+  const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
-    
+
     // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
-    const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
-    const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
-    
-    const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ''); // Remove any spaces, dashes or dots
+    const usaPattern = /^\d{10}$/; // For numbers like: 1234567890
+    const bdPattern = /^\d{11}$/; // For numbers like: 01639523282
+
+    const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ""); // Remove any spaces, dashes or dots
 
     if (!phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
     } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA or 11 digits for Bangladesh)";
+      newErrors.phoneNumber =
+        "Please enter a valid phone number (10 digits for USA)";
       isValid = false;
     }
 
-    if(isValid){
+    if (isValid) {
       try {
+        setIsLoading(true); // Add loading state while API call is in progress
+
         // Format phone number with country code based on length
         let formattedPhone;
         if (phoneNumber.length === 10) {
@@ -279,14 +294,14 @@ const BuyMultipleFormWithMudal = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch('http://192.168.40.47:3002/otp/send-otp', {
-          method: 'POST',
+        const response = await fetch("http://192.168.40.47:3002/otp/send-otp", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            phoneNumber: formattedPhone
-          })
+            phoneNumber: formattedPhone,
+          }),
         });
 
         const data = await response.json();
@@ -294,25 +309,22 @@ const BuyMultipleFormWithMudal = () => {
         if (data.success) {
           localStorage.setItem("zi5jd", data.otp);
           toast.success(data.message);
+          return true; // Return true to indicate successful validation
         } else {
           toast.error("Failed to send OTP");
           isValid = false;
         }
       } catch (error) {
-        console.error('Error sending OTP:', error);
+        console.error("Error sending OTP:", error);
         toast.error("Failed to send OTP. Please try again.");
         isValid = false;
+      } finally {
+        setIsLoading(false);
       }
     }
 
     setErrors(newErrors);
     return isValid;
-  };
-
-  const handlePhoneVerificationNext = () => {
-    if (validatePhoneNumber()) {
-      handleNext(); // Proceed to next step if phone number is valid
-    }
   };
 
   // Handle modal close with page reload
@@ -330,9 +342,8 @@ const BuyMultipleFormWithMudal = () => {
   //   });
   // };
 
-
   const formatPriceRange = (value) => {
-    const pointIndex = pricePoints.findIndex(p => p.value === value);
+    const pointIndex = pricePoints.findIndex((p) => p.value === value);
     return pricePoints[pointIndex].display;
   };
 
@@ -353,85 +364,90 @@ const BuyMultipleFormWithMudal = () => {
   };
 
   // Add Enter key handling
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      
-      // Handle OTP verification separately
-      if (currentStep === 7) {
-        const otpValues = inputRefs.current.map((input) => input.value).join("");
-        if (otpValues.length === 6) {
-          handleSubmit();
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        // Handle OTP verification separately
+        if (currentStep === 7) {
+          const otpValues = inputRefs.current
+            .map((input) => input.value)
+            .join("");
+          if (otpValues.length === 6) {
+            handleSubmit();
+          }
+          return;
         }
-        return;
+
+        // Handle other steps
+        switch (currentStep) {
+          case 0:
+            if (formData.addressToSell.trim()) {
+              handleNext();
+            }
+            break;
+
+          case 1: // Price Range step
+            if (formData.priceRange[0]) {
+              handleNext();
+            }
+            break;
+
+          case 2: // Agent Question
+            if (formData.hasAgent !== null) {
+              handleNext();
+            }
+            break;
+
+          case 3: // Looking to Sell Question
+            if (formData.lookingToSell !== null) {
+              handleNext();
+            }
+            break;
+
+          case 4: // Additional Details
+            handleNext(); // Additional details is optional
+            break;
+
+          case 5: // Contact Details
+            if (validateContactDetails()) {
+              handleContactNext();
+            }
+            break;
+
+          case 6: // Phone Verification
+            if (formData.phoneNumber.trim()) {
+              handlePhoneVerificationNext();
+            }
+            break;
+        }
       }
-
-      // Handle other steps
-      switch (currentStep) {
-        case 0:
-          if (formData.addressToSell.trim()) {
-            handleNext();
-          }
-          break;
-
-        case 1: // Price Range step
-          if (formData.priceRange[0]) {
-            handleNext();
-          }
-          break;
-
-        case 2: // Agent Question
-          if (formData.hasAgent !== null) {
-            handleNext();
-          }
-          break;
-
-        case 3: // Looking to Sell Question
-          if (formData.lookingToSell !== null) {
-            handleNext();
-          }
-          break;
-
-        case 4: // Additional Details
-          handleNext(); // Additional details is optional
-          break;
-
-        case 5: // Contact Details
-          if (validateContactDetails()) {
-            handleContactNext();
-          }
-          break;
-
-        case 6: // Phone Verification
-          if (formData.phoneNumber.trim()) {
-            handlePhoneVerificationNext();
-          }
-          break;
-      }
-    }
-  }, [
-    currentStep, 
-    formData, 
-    handleNext, 
-    handleSubmit, 
-    validateContactDetails, 
-    handleContactNext, 
-    handlePhoneVerificationNext
-  ]);
+    },
+    [
+      currentStep,
+      formData,
+      handleNext,
+      handleSubmit,
+      validateContactDetails,
+      handleContactNext,
+      handlePhoneVerificationNext,
+    ]
+  );
 
   // Add useEffect to handle the keypress event
   useEffect(() => {
     const handleGlobalKeyPress = (e) => {
-      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+      if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
         // Don't trigger navigation if user is typing in a form field
         return;
       }
       handleKeyPress(e);
     };
 
-    document.addEventListener('keydown', handleGlobalKeyPress);
+    document.addEventListener("keydown", handleGlobalKeyPress);
     return () => {
-      document.removeEventListener('keydown', handleGlobalKeyPress);
+      document.removeEventListener("keydown", handleGlobalKeyPress);
     };
   }, [handleKeyPress]); // Now we only depend on the memoized handleKeyPress
 
@@ -444,7 +460,7 @@ const BuyMultipleFormWithMudal = () => {
           formData={formData}
           updateFormData={updateFormData}
           handleNext={handleNext}
-          placeholderTitle='Enter your city name'
+          placeholderTitle="Enter your city name"
         />
       ),
     },
@@ -453,8 +469,8 @@ const BuyMultipleFormWithMudal = () => {
       content: (
         <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
-          <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
-              Roughly, what is your home worth?
+            <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
+            What price range are you looking to buy?
             </h2>
           </div>
 
@@ -496,7 +512,7 @@ const BuyMultipleFormWithMudal = () => {
                 className="bg-[#E9EAF3] my-6 text-center mx-auto"
               />
             </div>
-            <div className="flex justify-between px-10 mt-2 text-sm sm:text-base">
+            <div className="flex justify-between px-10 mt-2 text-lg md:text-2xl">
               <span>$100K</span>
               <span>$5M+</span>
             </div>
@@ -504,7 +520,7 @@ const BuyMultipleFormWithMudal = () => {
 
           <div className="flex justify-between items-center gap-4 px-8 sm:px-10 lg:px-20 py-8 mt-auto">
             <Button
-             className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
+              className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
               onClick={handleBack}
             >
@@ -522,16 +538,16 @@ const BuyMultipleFormWithMudal = () => {
       ),
     },
 
-    // Step 4: Agent Question
+    // Step 3: Agent Question
     {
       content: (
         <div
-        className="w-full h-full l
+          className="w-full h-full l
     md:h-[80vh] mx-auto flex flex-col px-3 select-none"
-      >
-          <div className="mb-4 mt-24">
-          <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              What price range are you looking to buy?
+        >
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+            Have you already hired a real estate Agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
               <div className="flex space-x-4">
@@ -542,9 +558,7 @@ const BuyMultipleFormWithMudal = () => {
                   Yes
                 </Button>
                 <Button
-                  variant={
-                    formData.hasAgent === false ? "primary" : "secondary"
-                  }
+                  variant={formData.hasAgent === false ? "primary" : "secondary"}
                   onClick={() => updateFormData("hasAgent", false)}
                 >
                   No
@@ -583,24 +597,20 @@ const BuyMultipleFormWithMudal = () => {
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
-          <div className="mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Have you already hired a real estate Agent?
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+            Are you also looking to sell a home?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
-            <div className="flex space-x-4">
+              <div className="flex space-x-4">
                 <Button
-                  variant={
-                    formData.lookingToSell === true ? "primary" : "secondary"
-                  }
+                  variant={formData.lookingToSell === true ? "primary" : "secondary"}
                   onClick={() => updateFormData("lookingToSell", true)}
                 >
                   Yes
                 </Button>
                 <Button
-                  variant={
-                    formData.lookingToSell === false ? "primary" : "secondary"
-                  }
+                  variant={formData.lookingToSell === false ? "primary" : "secondary"}
                   onClick={() => updateFormData("lookingToSell", false)}
                 >
                   No
@@ -610,7 +620,7 @@ const BuyMultipleFormWithMudal = () => {
           </div>
           {/* Footer Section for Buttons */}
           <div className="flex justify-between px-20 py-8 mt-auto">
-          <Button
+            <Button
               className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
               onClick={handleBack}
@@ -637,12 +647,11 @@ const BuyMultipleFormWithMudal = () => {
     // Step 6: Additional Details
     {
       content: (
-        <div className="w-full h-full py-5 mx-auto flex flex-col px-3 select-none">
-          <div className=" mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-              Are there any other details you'd like to share?
+        <div className="w-full h-full md:h-[80vh] mx-auto flex flex-col select-none">
+          <div className="md:px-10 px-4 mb-4 mt-24">
+            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px] pb-5">
+            Are there any other details you&apos;d like to share?
             </h2>
-          </div>
           <textarea
             className="w-full h-32 p-2 border rounded-md placeholder:text-lg bg-[#F8FAFB]"
             placeholder="Enter any details about your real estate needs..."
@@ -651,6 +660,7 @@ const BuyMultipleFormWithMudal = () => {
               updateFormData("additionalDetails", e.target.value)
             }
           />
+          </div>
           {/* Footer Section for Buttons */}
           <div className="flex justify-between px-20 py-8 mt-auto">
             <Button
@@ -676,8 +686,8 @@ const BuyMultipleFormWithMudal = () => {
     // Step 7: Contact Details
     {
       content: (
-        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-5">
+        <div className="w-full h-full md:h-[80vh] mx-auto flex flex-col select-none md:px-10 px-4 py-5">
+          <div className="mb-4 mt-24">
             <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
@@ -738,8 +748,7 @@ const BuyMultipleFormWithMudal = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking "Get Agents" I acknowledge and agree to
-            RealEstateAgents{" "}
+            By clicking "Get Agents" I acknowledge and agree to RealEstateAgents{" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
             includes binding arbitration and consent to receive electronic
@@ -763,16 +772,16 @@ const BuyMultipleFormWithMudal = () => {
     // Step 8: Phone Verification
     {
       content: (
-        <div className="md:w-[815px] py-5 mx-auto flex  flex-col px-3 select-none">
+        <div className="md:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl lg:text-3xl font-semibold">
-              We're preparing to connect you to at least 3 agents. Please verify
-              the following information to get connected sooner:
+              We&apos;re preparing to connect you to at least 3 agents. Please
+              verify the following information to get connected sooner:
             </h2>
           </div>
-          <div className="md:w-1/2 flex  space-x-3 mt-7 mb-16 md:mb-20">
+          <div className="md:w-1/2 flex space-x-3 mt-7 mb-16 md:mb-20 px-4">
             <div className="w-24">
-              <select className="w-full border rounded-md p-2 py-3 bg-[#ECEFF3]">
+              <select className="w-full border rounded-md p-2 py-3 bg-[#ECEFF3] text-sm md:text-base">
                 <option>USA</option>
               </select>
             </div>
@@ -792,7 +801,7 @@ const BuyMultipleFormWithMudal = () => {
             </div>
           </div>
 
-          <div className="flex justify-between md:mx-20 mb-5 md:my-10">
+          <div className="flex justify-between px-4 md:px-0 md:mx-20 mb-5 md:my-10">
             <Button
               className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
               variant="secondary"
@@ -804,13 +813,14 @@ const BuyMultipleFormWithMudal = () => {
             <Button
               className="flex items-center gap-1 text-[#23298B]"
               variant="secondary"
-              onClick={handlePhoneVerificationNext} // Call validation handler
+              onClick={handlePhoneVerificationNext}
+              disabled={isLoading}
             >
               Text Confirmation Code
             </Button>
           </div>
           <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
-            By clicking "Text Confirmation Code", I am providing my
+            By clicking &quot;Text Confirmation Code&quot;, I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
             to contact me at the phone number above for marketing purposes,
@@ -854,7 +864,7 @@ const BuyMultipleFormWithMudal = () => {
                       key={index}
                       type="text"
                       maxLength="1"
-                      className="w-12 h-14 text-center border border-gray-300 rounded-md text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#F8FAFB]"
+                      className="w-10 md:w-12 h-14 text-center border border-gray-300 rounded-md text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#ECEFF3]"
                       onChange={(e) => handleOtpInput(e, index)}
                       ref={(el) => (inputRefs.current[index] = el)}
                     />
@@ -885,9 +895,11 @@ const BuyMultipleFormWithMudal = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn't receive a code?{" "}
-          
-              <span className="text-indigo-600 font-semibold cursor-pointer hover:underline" onClick={handleBack}>
+              Didn&apos;t receive a code?{" "}
+              <span
+                className="text-indigo-600 font-semibold cursor-pointer hover:underline"
+                onClick={handleBack}
+              >
                 create a new request
               </span>
             </p>
@@ -904,7 +916,7 @@ const BuyMultipleFormWithMudal = () => {
     // Step 8: Thank you
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 md:px-10">
+        <div className="lg:w-[815px] md:min-h-[80vh] py-5 mx-auto flex flex-col px-4 md:px-10">
           <div className=" mb-4 mt-10">
             <div>
               <img
@@ -939,26 +951,26 @@ const BuyMultipleFormWithMudal = () => {
                 </span>
               </li>
               <li className="flex items-center justify-center">
-              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
-              <span className="md:text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Have over 50 5-Star reviews
                 </span>
               </li>
               <li className="flex items-center justify-center">
-              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
-              <span className="md:text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Specialize in buying or listing property
                 </span>
               </li>
               <li className="flex items-center justify-center">
-              <span className="text-green-600 mr-3 md:text-xl">✔️</span>
-              <span className="md:text-lg font-medium">
+                <span className="text-green-600 mr-3 md:text-xl">✔️</span>
+                <span className="md:text-lg font-medium">
                   Have been in the business for 5+ years
                 </span>
               </li>
             </ul>
 
-            <p className="text-gray-700 mt-8 text-center text-lg px-2">
+            <p className="text-gray-700 mt-8 text-center text-sm md:text-lg px-2">
               If you need anything in the meantime, don&apos;t hesitate to reach
               out to{" "}
               <a
@@ -976,7 +988,7 @@ const BuyMultipleFormWithMudal = () => {
   ];
 
   return (
-    <div className="bg-gray-100 flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">
+    <div className="bg-white flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">
       {currentStep === 0 ? (
         <div className="max-w-[1087px] rounded-b-xl bg-white rounded-2xl">
           {steps[0].content}
