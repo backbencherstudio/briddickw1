@@ -13,6 +13,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
 import { sendEmail } from "../lib/sendEmail";
 import sendOtpMessage from "../lib/sendMessage";
+import { baseurl } from "../util/base_url";
 
 // Progress bar component
 const ProgressBar = ({ currentStep, totalSteps }) => {
@@ -188,6 +189,13 @@ const SellAndBuyMultipleFormWithModul = () => {
       return;
     }
 
+    const storedOtp = localStorage.getItem("zi5jd");
+    if (otpValues !== storedOtp) {
+      toast.error("Invalid OTP. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -216,7 +224,7 @@ const SellAndBuyMultipleFormWithModul = () => {
 
       console.log('Sending data:', formattedData); // For debugging
 
-      const response = await fetch('http://192.168.40.47:3002/email/buy-and-sell', {
+      const response = await fetch(`${baseurl}/email/buy-and-sell`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -309,7 +317,7 @@ const SellAndBuyMultipleFormWithModul = () => {
   const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
-    
+    console.log("hit")
     // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
     const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
     const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
@@ -338,8 +346,8 @@ const SellAndBuyMultipleFormWithModul = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch("http://192.168.40.47:3002/otp/send-otp", {
-          method: "POST",
+        const response = await fetch(`${baseurl}/otp/send-otp`, {
+          method: 'POST',
           headers: {
             "Content-Type": "application/json",
           },

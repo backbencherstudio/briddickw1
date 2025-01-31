@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import TopArrowIcon from "../../public/icons/TopArrow";
+import { baseurl } from "../util/base_url";
 
 export const LocationStep = ({updateFormData, handleNext, placeholderTitle, showCompareButton = true }) => {
   const [searchResults, setSearchResults] = useState([]);
@@ -27,7 +28,7 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
     setIsSearching(true);
     try {
       const response = await fetch(
-        `http://192.168.40.47:3002/location?query=${query}`
+        `${baseurl}/location?query=${query}`
       );
       const data = await response.json();
       setSearchResults(data);

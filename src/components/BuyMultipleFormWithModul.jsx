@@ -11,6 +11,9 @@ import MinusIcon from "../../public/icons/MinusIcon";
 import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
+import { sendEmail } from "../lib/sendEmail";
+import sendOtpMessage from "../lib/sendMessage";
+import { baseurl } from "../util/base_url";
 
 // Progress bar component
 const ProgressBar = ({ currentStep, totalSteps }) => {
@@ -35,6 +38,7 @@ const INITIAL_FORM_DATA = {
   firstName: "",
   lastName: "",
   email: "",
+  phoneNumber: "",
   phoneNumber: "",
 };
 
@@ -137,31 +141,28 @@ const BuyMultipleFormWithMudal = () => {
       return;
     }
 
+    console.log("formData", formData);
     // Format the data according to API requirements
     const finalFormData = {
-      additionalDetails: formData.additionalDetails || "",
-      // Handle both cases where addressToSell is an object or string
-      addressToSell:
-        typeof formData.addressToSell === "object"
-          ? formData.addressToSell.description
-          : formData.addressToSell || "",
-      email: formData.email || "",
-      firstName: formData.firstName || "",
-      hasAgent: formData.hasAgent === true, // Convert to boolean
-      lastName: formData.lastName || "",
-      lookingToSell: formData.lookingToSell === true, // Convert to boolean
+      additionalDetails: formData.additionalDetails,
+      addressToSell: formData.lookingToSell, 
+      email: formData.email,
+      firstName: formData.firstName,
+      hasAgent: formData.hasAgent,
+      lastName: formData.lastName,
+      lookingToSell: formData.addressToSell.description,
       otp: otpValues,
-      phoneNumber: formData.phoneNumber?.startsWith("+")
-        ? formData.phoneNumber
+      phoneNumber: formData.phoneNumber?.startsWith('+') 
+        ? formData.phoneNumber 
         : `+${formData.phoneNumber}` || "",
-      priceRange: formatPriceRange(formData.priceRange[0]) || "",
+      priceRange: formatPriceRange(formData.priceRange[0]) || ""
     };
 
     try {
       // Log the data being sent for debugging
       console.log("Sending data to API:", finalFormData);
 
-      const response = await fetch("http://192.168.40.47:3002/email/buy", {
+      const response = await fetch(`${baseurl}/email/buy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -260,7 +261,7 @@ const BuyMultipleFormWithMudal = () => {
       handleNext(); // Only proceed to next step if validation succeeds
     }
   };
-  // Phone number validation function
+
   const validatePhoneNumber = async () => {
     let isValid = true;
     const newErrors = { ...INITIAL_ERRORS };
@@ -294,7 +295,7 @@ const BuyMultipleFormWithMudal = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch("http://192.168.40.47:3002/otp/send-otp", {
+        const response = await fetch(`${baseurl}/otp/send-otp`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -303,6 +304,7 @@ const BuyMultipleFormWithMudal = () => {
             phoneNumber: formattedPhone,
           }),
         });
+        console.log(response, response)
 
         const data = await response.json();
 
@@ -334,14 +336,6 @@ const BuyMultipleFormWithMudal = () => {
 
   const pricePoints = useMemo(() => getPricePoints(), []);
 
-  // const findNearestPricePoint = (value) => {
-  //   return pricePoints.reduce((prev, curr) => {
-  //     return Math.abs(curr.value - value) < Math.abs(prev.value - value)
-  //       ? curr
-  //       : prev;
-  //   });
-  // };
-
   const formatPriceRange = (value) => {
     const pointIndex = pricePoints.findIndex((p) => p.value === value);
     return pricePoints[pointIndex].display;
@@ -363,7 +357,6 @@ const BuyMultipleFormWithMudal = () => {
     }
   };
 
-  // Add Enter key handling
   const handleKeyPress = useCallback(
     (e) => {
       if (e.key === "Enter") {
@@ -469,8 +462,8 @@ const BuyMultipleFormWithMudal = () => {
       content: (
         <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
-            <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
-            What price range are you looking to buy?
+          <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
+              Roughly, what is your home worth?
             </h2>
           </div>
 
@@ -544,10 +537,10 @@ const BuyMultipleFormWithMudal = () => {
         <div
           className="w-full h-full l
     md:h-[80vh] mx-auto flex flex-col px-3 select-none"
-        >
-          <div className="md:px-10 px-4 mb-4 mt-24">
-            <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
-            Have you already hired a real estate Agent?
+      >
+          <div className="mb-4 mt-24">
+          <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
+              What price range are you looking to buy?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
               <div className="flex space-x-4">
@@ -820,7 +813,7 @@ const BuyMultipleFormWithMudal = () => {
             </Button>
           </div>
           <p className="text-gray-500 text-sm md:text-lg mt-10 md:mt-0">
-            By clicking &quot;Text Confirmation Code&quot;, I am providing my
+            By clicking "Text Confirmation Code", I am providing my
             esign and express written consent to allow ReferralExchange and our
             affiliated Participating Agents, or parties calling on their behalf,
             to contact me at the phone number above for marketing purposes,
@@ -895,11 +888,9 @@ const BuyMultipleFormWithMudal = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn&apos;t receive a code?{" "}
-              <span
-                className="text-indigo-600 font-semibold cursor-pointer hover:underline"
-                onClick={handleBack}
-              >
+              Didn't receive a code?{" "}
+          
+              <span className="text-indigo-600 font-semibold cursor-pointer hover:underline" onClick={handleBack}>
                 create a new request
               </span>
             </p>

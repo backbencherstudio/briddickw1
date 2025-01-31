@@ -11,6 +11,9 @@ import MinusIcon from "../../public/icons/MinusIcon";
 import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
+import sendOtpMessage from "../lib/sendMessage";
+import { sendEmail } from "../lib/sendEmail";
+import { baseurl } from "../util/base_url";
 // import { sendEmail } from "../lib/sendEmail";
 
 // Progress bar component
@@ -143,7 +146,7 @@ const SellMultipleFormWithModul = () => {
       // Format the data according to your needs
       const finalFormData = {
         additionalDetails: formData.additionalDetails,
-        addressToSell: formData.addressToSell,
+        addressToSell: formData.addressToSell.description,
         email: formData.email,
         firstName: formData.firstName,
         hasAgent: formData.hasAgent,
@@ -155,7 +158,7 @@ const SellMultipleFormWithModul = () => {
       };
 
       // Save data to your API
-      const response = await fetch('http://192.168.40.47:3002/email/sell', {
+      const response = await fetch(`${baseurl}/email/sell`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -284,7 +287,7 @@ const SellMultipleFormWithModul = () => {
           formattedPhone = `+88${phoneNumber}`;
         }
 
-        const response = await fetch('http://192.168.40.47:3002/otp/send-otp', {
+        const response = await fetch(`${baseurl}/otp/send-otp`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
