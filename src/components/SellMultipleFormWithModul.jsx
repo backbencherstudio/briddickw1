@@ -367,7 +367,7 @@ const SellMultipleFormWithModul = () => {
         <div className="w-full h-full lg:h-[80vh] lg:w-[815px] mx-auto flex flex-col select-none">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 sm:px-6 lg:px-7 mt-16 lg:mt-24 mb-4">
             <h2 className="font-semibold text-[#0F113A] text-2xl sm:text-3xl lg:text-[32px] text-center lg:text-left">
-              Roughly, what is your home worth?
+            Roughly, what is your home worth?
             </h2>
           </div>
 
@@ -444,7 +444,7 @@ const SellMultipleFormWithModul = () => {
         >
           <div className="md:px-10 px-4 mb-4 mt-24">
             <h2 className="font-medium md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
-              Have you already hired a real estate agent?
+            Have you already hired a real estate agent?
             </h2>
             <div className="flex-grow flex mt-10 items-center">
               <div className="flex space-x-4">
