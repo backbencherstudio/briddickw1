@@ -11,8 +11,8 @@ const Header = () => {
         <div className="max-w-[1350px] px-[15px] mx-auto">
           <div className="navbar py-[14px]">
             <div className="navbar-start">
-              <a href="/" className="">
-                <img src={logo} alt="" />
+              <a href="/">
+                <img src={logo} className="w-full md:w-28" alt="" />
               </a>
             </div>
             <div className="navbar-center hidden lg:flex">
