@@ -11,8 +11,7 @@ import MinusIcon from "../../public/icons/MinusIcon";
 import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
-import { sendEmail } from "../lib/sendEmail";
-import sendOtpMessage from "../lib/sendMessage";
+
 import { baseurl } from "../util/base_url";
 
 // Progress bar component
