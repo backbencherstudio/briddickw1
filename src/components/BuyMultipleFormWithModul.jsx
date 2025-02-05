@@ -11,8 +11,6 @@ import MinusIcon from "../../public/icons/MinusIcon";
 import PlusIcon from "../../public/icons/PlusIcon";
 import { toast, ToastContainer } from "react-toastify";
 import { LocationStep } from "./LocationStep";
-import { sendEmail } from "../lib/sendEmail";
-import sendOtpMessage from "../lib/sendMessage";
 import { baseurl } from "../util/base_url";
 
 // Progress bar component
@@ -38,7 +36,6 @@ const INITIAL_FORM_DATA = {
   firstName: "",
   lastName: "",
   email: "",
-  phoneNumber: "",
   phoneNumber: "",
 };
 
@@ -741,7 +738,7 @@ const BuyMultipleFormWithMudal = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking "Get Agents" I acknowledge and agree to RealEstateAgents{" "}
+            By clicking "Get Agents" I acknowledge and agree to RealEstateAgents.com  {" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
             includes binding arbitration and consent to receive electronic
