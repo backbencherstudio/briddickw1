@@ -39,7 +39,6 @@ const INITIAL_FORM_DATA = {
   lastName: "",
   email: "",
   phoneNumber: "",
-  phoneNumber: "",
 };
 
 const INITIAL_ERRORS = {
