@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -36,7 +36,6 @@ const INITIAL_FORM_DATA = {
   priceRange: [500],
   // coordinates: { lat: 39.8283, lng: -98.5795 }, // Center of USA
   hasAgent: null,
-  lookingToSell: null,
   additionalDetails: "",
   firstName: "",
   lastName: "",
@@ -135,9 +134,9 @@ const SellMultipleFormWithModul = () => {
 
     setIsLoading(true);
 
-    const otp = localStorage.getItem("zi5jd");
-    if (otpValues !== otp) {
-      toast.error("OTP is incorrect");
+    const storedOtp = localStorage.getItem("zi5jd");
+    if (otpValues !== storedOtp) {
+      toast.error("Invalid OTP. Please try again.");
       setIsLoading(false);
       return;
     }
@@ -151,9 +150,10 @@ const SellMultipleFormWithModul = () => {
         firstName: formData.firstName,
         hasAgent: formData.hasAgent,
         lastName: formData.lastName,
-        lookingToSell: formData.lookingToSell,
         otp: otpValues,
-        phoneNumber: formData.phoneNumber,
+        phoneNumber: formData.phoneNumber?.startsWith('+') 
+        ? formData.phoneNumber 
+        : `+${formData.phoneNumber}` || "",
         priceRange: formatPriceRange(formData.priceRange[0])
       };
 
@@ -166,8 +166,11 @@ const SellMultipleFormWithModul = () => {
         body: JSON.stringify(finalFormData)
       });
 
+      const responseData = await response.json();
+      console.log("API Response:", responseData);
+
       if (!response.ok) {
-        throw new Error('Failed to save data');
+        throw new Error(responseData.error || "Failed to submit form");
       }
 
       toast.success("Form submitted successfully!");
@@ -349,6 +352,95 @@ const SellMultipleFormWithModul = () => {
     }
   };
 
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        // Handle OTP verification separately
+        if (currentStep === 6) {
+          const otpValues = inputRefs.current
+            .map((input) => input.value)
+            .join("");
+          if (otpValues.length === 6) {
+            handleSubmit();
+          }
+          return;
+        }
+
+        // Handle other steps
+        switch (currentStep) {
+          case 0:
+            if (formData.addressToSell.trim()) {
+              handleNext();
+            }
+            break;
+
+          case 1: // Price Range step
+            if (formData.priceRange[0]) {
+              handleNext();
+            }
+            break;
+
+          case 2: // Agent Question
+            if (formData.hasAgent !== null) {
+              handleNext();
+            }
+            break;
+
+          // case 3: // Looking to Sell Question
+          //   if (formData.lookingToSell !== null) {
+          //     handleNext();
+          //   }
+          //   break;
+
+          case 3: // Additional Details
+            handleNext(); // Additional details is optional
+            break;
+
+          case 4: // Contact Details
+            if (validateContactDetails()) {
+              handleContactNext();
+            }
+            break;
+
+          case 5: // Phone Verification
+            if (formData.phoneNumber.trim()) {
+              handlePhoneVerificationNext();
+            }
+            break;
+        }
+      }
+    },
+    [
+      currentStep,
+      formData,
+      handleNext,
+      handleSubmit,
+      validateContactDetails,
+      handleContactNext,
+      handlePhoneVerificationNext,
+    ]
+  );
+
+  // Add useEffect to handle the keypress event
+  useEffect(() => {
+    const handleGlobalKeyPress = (e) => {
+      if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+        // Don't trigger navigation if user is typing in a form field
+        return;
+      }
+      handleKeyPress(e);
+    };
+
+    document.addEventListener("keydown", handleGlobalKeyPress);
+    return () => {
+      document.removeEventListener("keydown", handleGlobalKeyPress);
+    };
+  }, [handleKeyPress]); // Now we only depend on the memoized handleKeyPress
+
+  
+
   const steps = [
     // step 1:
     {
@@ -492,62 +584,9 @@ const SellMultipleFormWithModul = () => {
       ),
     },
 
-    // Step 4: Selling Question
-    // {
-    //   content: (
-    //     <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
-    //       <div className="md:px-10 px-4 mb-4 mt-24">
-    //         <h2 className="font-medium md:font-semibold text-[#0F113A] text-3xl md:text-[32px]">
-    //           Are you also looking to sell a home?
-    //         </h2>
-    //         <div className="flex-grow flex mt-10 items-center">
-    //           <div className="flex space-x-4">
-    //             <Button
-    //               variant={
-    //                 formData.lookingToSell === true ? "primary" : "secondary"
-    //               }
-    //               onClick={() => updateFormData("lookingToSell", true)}
-    //             >
-    //               Yes
-    //             </Button>
-    //             <Button
-    //               variant={
-    //                 formData.lookingToSell === false ? "primary" : "secondary"
-    //               }
-    //               onClick={() => updateFormData("lookingToSell", false)}
-    //             >
-    //               No
-    //             </Button>
-    //           </div>
-    //         </div>
-    //       </div>
-    //       {/* Footer Section for Buttons */}
-    //       <div className="flex justify-between px-20 py-8 mt-auto">
-    //         <Button
-    //           className="flex items-center gap-1 text-[#23298B] shadow-sm hover:text-white transition-all duration-300 ease-in-out"
-    //           variant="secondary"
-    //           onClick={handleBack}
-    //         >
-    //           Back
-    //         </Button>
-    //         <Button
-    //           className={`flex items-center gap-1 ${
-    //             formData.lookingToSell !== null
-    //               ? "bg-[#23298B] text-white"
-    //               : "bg-gray-400 text-white cursor-not-allowed"
-    //           } shadow-sm hover:text-[#23298B] transition-all duration-300 ease-in-out`}
-    //           variant="primary"
-    //           onClick={handleNext}
-    //           disabled={formData.lookingToSell === null}
-    //         >
-    //           Next
-    //         </Button>
-    //       </div>
-    //     </div>
-    //   ),
-    // },
+    
 
-    // Step 5: Additional Details
+    // Step 4: Additional Details
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 select-none">
@@ -586,16 +625,16 @@ const SellMultipleFormWithModul = () => {
         </div>
       ),
     },
-    // Step 6: Contact Details
+    // Step 5: Contact Details
     {
       content: (
-        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
-          <div className="mb-4 mt-4">
+        <div className="w-full h-full md:h-[80vh] mx-auto flex flex-col select-none md:px-10 px-4 py-5">
+          <div className="mb-4 mt-24">
             <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
           </div>
-          <p className="text-sm md:text-lg text-gray-600">
+          <p className="md:text-lg text-gray-600">
             This is where RealEstateAgents.com and our agents will contact you
             to discuss your needs
           </p>
@@ -606,7 +645,7 @@ const SellMultipleFormWithModul = () => {
                   placeholder="First name"
                   value={formData.firstName}
                   onChange={(e) => updateFormData("firstName", e.target.value)}
-                  className="px-5 py-6 bg-[#ECEFF3] placeholder:text-sm md:placeholder:text-lg"
+                  className="px-5 py-6 bg-[#ECEFF3]"
                 />
                 {errors.firstName && (
                   <p className="text-red-500 text-sm mt-1">
@@ -619,7 +658,7 @@ const SellMultipleFormWithModul = () => {
                   placeholder="Last name"
                   value={formData.lastName}
                   onChange={(e) => updateFormData("lastName", e.target.value)}
-                  className="px-5 py-6 bg-[#ECEFF3] placeholder:text-sm md:placeholder:text-lg"
+                  className="px-5 py-6 bg-[#ECEFF3]"
                 />
                 {errors.lastName && (
                   <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
@@ -632,7 +671,7 @@ const SellMultipleFormWithModul = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => updateFormData("email", e.target.value)}
-                className="px-5 py-6 bg-[#ECEFF3] placeholder:text-sm md:placeholder:text-lg"
+                className="px-5 py-6 bg-[#ECEFF3]"
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -651,8 +690,7 @@ const SellMultipleFormWithModul = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking &#34;Get Agents&#34; I acknowledge and agree to
-            RealEstateAgents{" "}
+            By clicking "Get Agents" I acknowledge and agree to RealEstateAgents.com  {" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
             includes binding arbitration and consent to receive electronic
@@ -673,7 +711,7 @@ const SellMultipleFormWithModul = () => {
         </div>
       ),
     },
-    // Step 7: Phone Verification
+    // Step 6: Phone Verification
     {
       content: (
         <div className="md:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
@@ -720,6 +758,15 @@ const SellMultipleFormWithModul = () => {
               onClick={handlePhoneVerificationNext}
               disabled={isLoading}
             >
+              Text Confirmation Code
+            </Button>
+          </div>
+            {/* <Button
+              className="flex items-center gap-1 text-[#23298B]"
+              variant="secondary"
+              onClick={handlePhoneVerificationNext}
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
@@ -728,8 +775,8 @@ const SellMultipleFormWithModul = () => {
               ) : (
                 "Text Confirmation Code"
               )}
-            </Button>
-          </div>
+            </Button> */}
+          
           <p className="text-gray-500 text-sm md:text-lg  md:mt-0">
             By clicking &quot;Text Confirmation Code&quot;, I am providing my
             esign and express written consent to allow ReferralExchange and our
@@ -898,72 +945,7 @@ const SellMultipleFormWithModul = () => {
     },
   ];
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      
-      // Handle OTP verification separately
-      if (currentStep === 7) {
-        const otpValues = inputRefs.current.map((input) => input.value).join("");
-        if (otpValues.length === 6) {
-          handleSubmit();
-        }
-        return;
-      }
-
-      // Handle other steps
-      switch (currentStep) {
-        case 0:
-          if (formData.addressToSell.trim()) {
-            handleNext();
-          }
-          break;
-
-        case 1:
-          if (formData.priceRange[0]) {
-            handleNext();
-          }
-          break;
-
-        case 2:
-          if (formData.hasAgent !== null) {
-            handleNext();
-          }
-          break;
-
-        case 3:
-          if (formData.lookingToSell !== null) {
-            handleNext();
-          }
-          break;
-
-        case 4:
-          handleNext(); // Additional details is optional
-          break;
-
-        case 5:
-          if (validateContactDetails()) {
-            handleContactNext();
-          }
-          break;
-
-        case 6:
-          if (formData.phoneNumber.trim()) {
-            handlePhoneVerificationNext();
-          }
-          break;
-      }
-    }
-  };
-
-  // Add useEffect to attach/detach the event listener
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyPress);
-    return () => {
-      document.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [currentStep, formData]); // Add dependencies that the handler uses
-
+  
   return (
     <div className="bg-white flex flex-col items-center justify-center rounded-b-2xl md:rounded-tr-2xl ">
       {currentStep === 0 ? (

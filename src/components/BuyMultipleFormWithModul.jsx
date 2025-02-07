@@ -583,7 +583,7 @@ const BuyMultipleFormWithMudal = () => {
       ),
     },
 
-    // Step 5: Selling Question
+    // Step 4: Selling Question
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">

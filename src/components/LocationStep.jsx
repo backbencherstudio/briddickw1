@@ -10,7 +10,6 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [inputValue, setInputValue] = useState('');
-  const [focusedIndex, setFocusedIndex] = useState(-1);
   const [error, setError] = useState("");
 
   const resultRefs = useRef([]);
@@ -21,7 +20,6 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
   const searchLocation = async (query) => {
     if (!query) {
       setSearchResults([]);
-      setFocusedIndex(-1);
       return;
     }
 
@@ -32,7 +30,6 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
       );
       const data = await response.json();
       setSearchResults(data);
-      setFocusedIndex(-1);
     } catch (error) {
       console.error("Error searching locations:", error);
       toast.error("Error searching locations. Please try again.");
@@ -59,53 +56,9 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
       fullLocation: location
     });
     setSearchResults([]);
-    setFocusedIndex(-1);
     setError("");
     handleNext();
   };
-
-  const handleKeyDown = (event) => {
-    if (searchResults.length === 0) return;
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setFocusedIndex((prevIndex) =>
-        prevIndex < searchResults.length - 1 ? prevIndex + 1 : 0
-      );
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setFocusedIndex((prevIndex) =>
-        prevIndex > 0 ? prevIndex - 1 : searchResults.length - 1
-      );
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      if (focusedIndex >= 0) {
-        handleLocationSelect(searchResults[focusedIndex]);
-        handleNext();
-      } else if (searchResults.length > 0) {
-        handleLocationSelect(searchResults[0]);
-        handleNext();
-      }
-    }
-  };
-
-  // Scroll focused result into view
-  useEffect(() => {
-    if (focusedIndex >= 0 && resultRefs.current[focusedIndex]) {
-      resultRefs.current[focusedIndex].scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
-    }
-  }, [focusedIndex]);
-
-  // Attach keydown listener
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [searchResults, focusedIndex]);
 
   const handleSubmit = () => {
     if (!inputValue.trim()) {
@@ -166,12 +119,7 @@ export const LocationStep = ({updateFormData, handleNext, placeholderTitle, show
             {searchResults.map((result, index) => (
               <div
                 key={index}
-                ref={(el) => resultRefs.current[index] = el}
-                className={`p-2 cursor-pointer mx-7 py-2 ${
-                  index === focusedIndex
-                    ? "bg-gray-200"
-                    : "hover:bg-gray-100 rounded-2xl"
-                }`}
+                className={`p-2 cursor-pointer mx-7 py-2 hover:bg-gray-100 rounded-2xl`}
                 onClick={() => handleLocationSelect(result)}
               >
                 <p>{result.description}</p>

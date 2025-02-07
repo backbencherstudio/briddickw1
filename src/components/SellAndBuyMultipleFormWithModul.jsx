@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -436,6 +436,107 @@ const SellAndBuyMultipleFormWithModul = () => {
     }
   };
 
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        // Handle OTP verification separately
+        if (currentStep === 8) {
+          const otpValues = inputRefs.current
+            .map((input) => input.value)
+            .join("");
+          if (otpValues.length === 6) {
+            handleSubmit();
+          }
+          return;
+        }
+
+        // Handle other steps
+        switch (currentStep) {
+          case 0: // Location Input
+            if (formData.addressToSell.trim()) {
+              handleNext();
+            }
+            break;
+
+          case 1: // Home Price Range
+            if (formData.homePriceRange[0]) {
+              handleNext();
+            }
+            break;
+
+          case 2: // Buy Location
+            if (formData.cityToBuy.trim()) {
+              if (!error) {
+                handleNext();
+              }
+            }
+            break;
+
+          case 3: // Looking Price Range
+            if (formData.lookingPriceRange[0]) {
+              handleNext();
+            }
+            break;
+
+          case 4: // Agent Question
+            if (formData.hasAgent !== null) {
+              handleNext();
+            }
+            break;
+
+          case 5: // Additional Details
+            handleNext(); // Additional details is optional
+            break;
+
+          case 6: // Contact Details
+            if (validateContactDetails()) {
+              handleContactNext();
+            }
+            break;
+
+          case 7: // Phone Verification
+            if (formData.phoneNumber.trim()) {
+              handlePhoneVerificationNext();
+            }
+            break;
+        }
+      }
+    },
+    [
+      currentStep,
+      formData,
+      handleNext,
+      handleSubmit,
+      validateContactDetails,
+      handleContactNext,
+      handlePhoneVerificationNext,
+      error // Add error to dependencies
+    ]
+  );
+
+  // Add useEffect to handle the keypress event
+  useEffect(() => {
+    const handleGlobalKeyPress = (e) => {
+      // Don't trigger navigation if user is typing in a form field
+      if (
+        e.target.tagName === "TEXTAREA" || 
+        e.target.tagName === "INPUT" ||
+        e.target.tagName === "SELECT"
+      ) {
+        return;
+      }
+      handleKeyPress(e);
+    };
+
+    document.addEventListener("keydown", handleGlobalKeyPress);
+    return () => {
+      document.removeEventListener("keydown", handleGlobalKeyPress);
+    };
+  }, [handleKeyPress]);
+
+
   const steps = [
     // Step 1: Location Input (outside modal)
     {
@@ -708,7 +809,7 @@ const SellAndBuyMultipleFormWithModul = () => {
       ),
     },
 
-    // Step 5: Additional Details
+    // Step 6: Additional Details
     {
       content: (
         <div className="w-full h-full lg:h-[80vh] px-3 mx-auto flex flex-col select-none">
@@ -747,16 +848,16 @@ const SellAndBuyMultipleFormWithModul = () => {
         </div>
       ),
     },
-    // Step 6: Contact Details
+    // Step 7: Contact Details
     {
       content: (
-        <div className="w-full h-full lg:h-[80vh] mx-auto flex flex-col px-3 md:px-10 select-none py-5">
-          <div className=" mb-4 mt-24">
-            <h2 className="md:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
+        <div className="w-full h-full md:h-[80vh] mx-auto flex flex-col select-none md:px-10 px-4 py-5">
+          <div className="mb-4 mt-24">
+            <h2 className="font-medium lg:font-semibold text-[#0F113A] text-2xl md:text-[32px]">
               Last step! Now just add a few contact details
             </h2>
           </div>
-          <p className="text-sm md:text-lg text-gray-600">
+          <p className="md:text-lg text-gray-600">
             This is where RealEstateAgents.com and our agents will contact you
             to discuss your needs
           </p>
@@ -812,8 +913,7 @@ const SellAndBuyMultipleFormWithModul = () => {
           </div>
 
           <p className="text-sm md:text-lg font-normal text-gray-500 mt-4">
-            By clicking "Get Agents" I acknowledge and agree to
-            RealEstateAgents{" "}
+            By clicking "Get Agents" I acknowledge and agree to RealEstateAgents.com  {" "}
             <span className="text-[#23298B]">Terms of Use</span> and{" "}
             <span className="text-[#23298B]">Privacy Policy</span>, which
             includes binding arbitration and consent to receive electronic
@@ -834,14 +934,14 @@ const SellAndBuyMultipleFormWithModul = () => {
         </div>
       ),
     },
-    // Step 7: Phone Verification
+    // Step 8: Phone Verification
     {
       content: (
         <div className="md:w-[815px] py-5 mx-auto flex flex-col px-3 select-none">
           <div className="mb-4 mt-5 md:mt-24">
             <h2 className="text-[#0F113A] text-xl lg:text-3xl font-semibold">
-              We&apos;re preparing to connect you to at least 3 agents. Please verify
-              the following information to get connected sooner:
+              We&apos;re preparing to connect you to at least 3 agents. Please
+              verify the following information to get connected sooner:
             </h2>
           </div>
           <div className="md:w-1/2 flex space-x-3 mt-7 mb-16 md:mb-20 px-4">
@@ -898,10 +998,10 @@ const SellAndBuyMultipleFormWithModul = () => {
         </div>
       ),
     },
-    // Step 8: OTP Verification
+    // Step 9: OTP Verification
     {
       content: (
-        <div className="lg:w-[815px] h-[80vh] mx-auto flex flex-col px-4 lg:px-0">
+        <div className="lg:w-[815px] py-5 mx-auto flex flex-col px-4 lg:px-0">
           <div className=" mb-4 mt-24">
             <div className="w-full">
               <img
@@ -960,11 +1060,9 @@ const SellAndBuyMultipleFormWithModul = () => {
             </div>
 
             <p className="text-sm mt-8 text-gray-500 text-center">
-              Didn&apos;t receive a code?{" "}
-              <span
-                className="text-indigo-600 font-semibold cursor-pointer hover:underline"
-                onClick={handleBack}
-              >
+              Didn't receive a code?{" "}
+          
+              <span className="text-indigo-600 font-semibold cursor-pointer hover:underline" onClick={handleBack}>
                 create a new request
               </span>
             </p>
@@ -978,7 +1076,7 @@ const SellAndBuyMultipleFormWithModul = () => {
       ),
     },
 
-    // Step 8: Thank you
+    // Step 10: Thank you
     {
       content: (
         <div className="lg:w-[815px] md:min-h-[80vh] py-5 mx-auto flex flex-col px-4 md:px-10">
@@ -1052,44 +1150,44 @@ const SellAndBuyMultipleFormWithModul = () => {
     },
   ];
 
-  // Add this new function to handle Enter key press
-  const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
+  // // Add this new function to handle Enter key press
+  // const handleKeyPress = (event) => {
+  //   if (event.key === 'Enter') {
+  //     event.preventDefault();
       
-      // Handle different steps differently if needed
-      switch (currentStep) {
-        case 0:
-          handleNext();
-          break;
-        case 2: // City input step
-          if (validateCityInput()) {
-            handleNext();
-          }
-          break;
-        case 5: // Contact details step
-          if (validateContactDetails()) {
-            handleNext();
-          }
-          break;
-        case 6: // Phone verification step
-          if (validatePhoneNumber()) {
-            handleNext();
-          }
-          break;
-        default:
-          handleNext();
-      }
-    }
-  };
+  //     // Handle different steps differently if needed
+  //     switch (currentStep) {
+  //       case 0:
+  //         handleNext();
+  //         break;
+  //       case 2: // City input step
+  //         if (validateCityInput()) {
+  //           handleNext();
+  //         }
+  //         break;
+  //       case 5: // Contact details step
+  //         if (validateContactDetails()) {
+  //           handleNext();
+  //         }
+  //         break;
+  //       case 6: // Phone verification step
+  //         if (validatePhoneNumber()) {
+  //           handleNext();
+  //         }
+  //         break;
+  //       default:
+  //         handleNext();
+  //     }
+  //   }
+  // };
 
-  // Add useEffect to attach/detach the event listener
-  useEffect(() => {
-    window.addEventListener('keypress', handleKeyPress);
-    return () => {
-      window.removeEventListener('keypress', handleKeyPress);
-    };
-  }, [currentStep, formData]); // Add dependencies that are used in handleKeyPress
+  // // Add useEffect to attach/detach the event listener
+  // useEffect(() => {
+  //   window.addEventListener('keypress', handleKeyPress);
+  //   return () => {
+  //     window.removeEventListener('keypress', handleKeyPress);
+  //   };
+  // }, [currentStep, formData]); // Add dependencies that are used in handleKeyPress
 
   return (
     <div className="bg-white flex flex-col items-center justify-center rounded-2xl rounded-t-none md:rounded-tr-2xl">
