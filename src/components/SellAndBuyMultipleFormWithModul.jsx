@@ -319,14 +319,13 @@ const SellAndBuyMultipleFormWithModul = () => {
     console.log("hit")
     // Pattern for both USA (10 digits) and Bangladesh (11 digits) numbers
     const usaPattern = /^\d{10}$/;  // For numbers like: 1234567890
-    const bdPattern = /^\d{11}$/;   // For numbers like: 01639523282
     
     const phoneNumber = formData.phoneNumber.trim().replace(/[-\s.]/g, ''); // Remove any spaces, dashes or dots
 
     if (!phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
-    } else if (!usaPattern.test(phoneNumber) && !bdPattern.test(phoneNumber)) {
+    } else if (!usaPattern.test(phoneNumber)) {
       newErrors.phoneNumber = "Please enter a valid phone number (10 digits for USA)";
       isValid = false;
     }
@@ -340,9 +339,6 @@ const SellAndBuyMultipleFormWithModul = () => {
         if (phoneNumber.length === 10) {
           // USA number
           formattedPhone = `+1${phoneNumber}`;
-        } else if (phoneNumber.length === 11) {
-          // Bangladesh number (replace first '0' with '+880')
-          formattedPhone = `+88${phoneNumber}`;
         }
 
         const response = await fetch(`${baseurl}/otp/send-otp`, {
